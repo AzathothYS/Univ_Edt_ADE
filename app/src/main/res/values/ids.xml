@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--    <item name="" type="id"/>   -->
+    
+    <item name="EdTLayout" type="id"/>
+    <item name="TestText" type="id"/>
+
+
+    <item name="Lundi" type="id"/>
+    <item name="Mardi" type="id"/>
+    <item name="Mercredi" type="id"/>
+    <item name="Jeudi" type="id"/>
+    <item name="Vendredi" type="id"/>
+    <item name="Samedi" type="id"/>
+    <item name="Dimenche" type="id"/>
+
+    <array name="days_ids">
+        <item>@id/Lundi</item>
+        <item>@id/Mardi</item>
+        <item>@id/Mercredi</item>
+        <item>@id/Jeudi</item>
+        <item>@id/Vendredi</item>
+        <item>@id/Samedi</item>
+        <item>@id/Dimanche</item>
+    </array>
+
+
+
+</resources>

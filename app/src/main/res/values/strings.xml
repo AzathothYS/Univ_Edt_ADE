@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">Univ_Edt_ADE</string>
+
+    <string name="button_json">JSON READ</string>
+    <string name="title_activity_test_grid_display">TestGridDisplay</string>
+
+    <string name="lundi">lundi</string>
+    <string name="mardi">mardi</string>
+    <string name="mercredi">mercredi</string>
+    <string name="jeudi">jeudi</string>
+    <string name="vendredi">vendredi</string>
+    <string name="samedi">samedi</string>
+    <string name="dimanche">dimanche</string>
+
+    <string name="menuName">Emploi du Temps</string>
+
+    <string name="title_activity_test_nav_drawer">TestNavDrawer</string>
+
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_settings">Settings</string>
+
+</resources>

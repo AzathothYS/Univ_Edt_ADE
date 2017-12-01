@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.a.univ_edt_ade.EdtDisplay">
+
+    <com.a.univ_edt_ade.CustomsAssets.VScrollView
+        android:id="@+id/VScrollView"
+        android:scrollbarThumbVertical="@null"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="0dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="0dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintVertical_bias="0.0"
+        tools:layout_constraintBottom_creator="1"
+        tools:layout_constraintLeft_creator="1"
+        tools:layout_constraintRight_creator="1"
+        tools:layout_constraintTop_creator="1"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <com.a.univ_edt_ade.CustomsAssets.HScrollView
+            android:id="@+id/HScrollView"
+            android:scrollbarThumbHorizontal="@null"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:id="@+id/LLayout"
+                android:background="@null"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                tools:layout_editor_absoluteX="8dp"
+                tools:layout_editor_absoluteY="8dp">
+
+                <Space
+                    android:layout_width="@dimen/cornerWidth"
+                    android:layout_height="@dimen/hoursHeight" />
+
+                <RelativeLayout
+                    android:id="@+id/Lundi"
+                    android:layout_width="@dimen/daySpacing"
+                    android:layout_height="match_parent">
+
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:id="@+id/Mardi"
+                    android:layout_width="@dimen/daySpacing"
+                    android:layout_height="match_parent">
+
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:id="@+id/Mercredi"
+                    android:layout_width="@dimen/daySpacing"
+                    android:layout_height="match_parent">
+
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:id="@+id/Jeudi"
+                    android:layout_width="@dimen/daySpacing"
+                    android:layout_height="match_parent">
+
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:id="@+id/Vendredi"
+                    android:layout_width="@dimen/daySpacing"
+                    android:layout_height="match_parent">
+
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:id="@+id/Samedi"
+                    android:layout_width="@dimen/daySpacing"
+                    android:layout_height="match_parent">
+
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:id="@+id/Dimanche"
+                    android:layout_width="@dimen/daySpacing"
+                    android:layout_height="match_parent">
+
+                </RelativeLayout>
+
+                <Space
+                    android:layout_width="@dimen/cornerWidth"
+                    android:layout_height="@dimen/hoursHeight" />
+
+            </LinearLayout>
+
+        </com.a.univ_edt_ade.CustomsAssets.HScrollView>
+    </com.a.univ_edt_ade.CustomsAssets.VScrollView>
+
+</android.support.constraint.ConstraintLayout>

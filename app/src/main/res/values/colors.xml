@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>
+
+    <color name="toolbarColor">#00be00</color>
+    <color name="menuGradCenter">#009900</color>
+    <color name="menuGradEnd">#006600</color>
+
+    <color name="dayLine">#54707070</color>
+    <color name="hourLine">#2ad4d4d4</color>
+    <color name="hourFontColor">#666666</color>
+    <color name="textEvent">#1b1b1b</color>
+
+    <string-array name="eventColorSet1">
+        <item>#df3030</item>
+        <item>#02af1c</item>
+        <item>#00c1be</item>
+        <item>#5ac23a</item>
+        <item>#5460f5</item>
+        <item>#e4e129</item>
+        <item>#38b2ea</item>
+        <item>#ff9900</item>
+        <item>#e14495</item>
+        <item>#91e641</item>
+        <item>#d384e7</item>
+    </string-array>
+
+    <string-array name="eventColorSet2">
+        <item>#e4de8e</item>
+        <item>#6475ca</item>
+        <item>#ca6b6b</item>
+        <item>#72e26f</item>
+        <item>#6fd7cb</item>
+        <item>#be6ad7</item>
+        <item>#d7ab79</item>
+        <item>#6fa9ec</item>
+        <item>#936adf</item>
+        <item>#de6bde</item>
+        <item>#bce772</item>
+        <item>#8366d4</item>
+        <item>#4e90df</item>
+    </string-array>
+
+    <color name="textRListLineColor">#6e6e6e</color>
+
+</resources>
