@@ -33,7 +33,7 @@ public class ViewEvent extends View {
 
     public String[] undisplayed;
 
-    public boolean debug = false;
+    public boolean debug = true;
 
     public ViewEvent(Context context) {
         super(context);
@@ -50,7 +50,7 @@ public class ViewEvent extends View {
     public void fromEvent(Event event) {
 
         if (debug)
-            Log.d("DebugViewEvent", "Setting event params... ");
+            Log.d("DebugViewEvent", "Setting event params of event '" + event.getTitre() + "' ...");
 
         this.day = event.getDay();
         this.title = event.getTitre();
@@ -141,14 +141,14 @@ public class ViewEvent extends View {
      * Retourne la position de l'event dans la layout
      */
     public int getStart() {
-        return (int) (this.start * parentHourSpacing) - 3 + parentCornerHeight;
+        return (int) (this.start * parentHourSpacing) + 3 + parentCornerHeight;
     }
 
     /**
      * Retourne la longueur de l'event dans la layout
      */
     public int getLength() {
-        return (int) this.length * parentHourSpacing;
+        return (int) (this.length * parentHourSpacing);
     }
 
     @Override

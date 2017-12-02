@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -63,33 +64,36 @@ public class EdTLayout extends LinearLayout {
     public VScrollView Vview;
     public HScrollView Hview;
 
-    public RelativeLayout[] Days = new RelativeLayout[7];
-    public int dayDispIndex = -1;
-    public boolean landscapeMode = false;
-
-    private Paint rectPaint = new Paint();
-
     public int height, width;
     private int cornerWidth;
     private int daySpacing;
 
+
+    public RelativeLayout[] Days = new RelativeLayout[7];
+    public int dayDispIndex = -1;
+    public boolean landscapeMode = false;
+
+    private int initialDay = -1;
+
+
+    public GestureDetector gestureListener;
     private boolean ignoreNextActions = false;
+    private final float friction = 0.4f;    // facteur de réduction de la vitesse du fling
+
     private int potentialDayChange = -1;      // si on change vers DayDisp, dayDispIndex sera changé à cette valeur
 
     public ScaleGestureDetector scaleDetector;
     private Point pivot = new Point(0,0);
     private float scaleFactor = 1.f;
-    private float scaleFactorMAX = 1.2f, scaleFactorMIN = .8f;
+    private final float scaleFactorMAX = 1.2f, scaleFactorMIN = .8f;
+
     private long timeSinceLastChange = Calendar.getInstance().getTimeInMillis();
-    private AtomicBoolean isScaleThreadRunning = new AtomicBoolean();
+
     private Thread ScaleReducer;
-    public GestureDetector gestureListener;
-    private Scroller scroller;
-    private final float friction = 0.4f;    // facteur de réduction de la vitesse du fling
+    private AtomicBoolean isScaleThreadRunning = new AtomicBoolean();
+
 
     private boolean isScreenInLandscape = false;
-
-    private long time;
 
 
     public EdTLayout(Context context) {
@@ -118,6 +122,7 @@ public class EdTLayout extends LinearLayout {
         if (previousState != null) {
             dayDispIndex = previousState.getInt("dayDispIndex", -1);
             landscapeMode = previousState.getBoolean("landscapeMode", false);
+            initialDay = previousState.getInt("initialDay", -1);
         }
 
         if (dayDispIndex >= 0) {
@@ -136,19 +141,20 @@ public class EdTLayout extends LinearLayout {
 
     // TODO: rajouter les events méthode pour associer le fichier/liste d'event voulu, une autre appellée après chaque changement de state et onFinishInflate pour les afficher
 
-    // TODO: ajouter un 'scrollTo' lorsque l'EdT est rempli, pour aller directement sur le jour d'aujourd'hui
     // TODO: remettre le scrolling là où il était lorque l'on passe de landscape à initial
-    // TODO: mettre le scroll au jour zoomé lorsque l'on quitte DayDisp
 
-    // TODO: nettoyer le code des init et le compacter
+    // TODO: nettoyer le code des init et le compacter -> quasi fait
 
     // TODO: Crash lors d'un changement de mode (à cause du scaling?) -> android.view.ViewRootImpl$CalledFromWrongThreadException: Only the original thread that created a view hierarchy can touch its views
 
-    // TODO: erreur de taille pour quasi toutes les heures de fin
-
     // TODO: le background en mode landscape est faux
 
+    // TODO: LE SCROLLING A RESET LORSQUE L'ON SE MET EN MODE LANDSCAPE PUTAIN
+
     // TODO: Mettre le Json parser dans un thread (Async?) car il y a une memory leak à chaque fois que l'on l'utilise
+    // TODO: mais d'abord faire de JsonEdT un singleton ou l'avoir encapsulé dans un singleton
+
+    // TODO: Créer mon propre GestureDetector, car c'est le seul moyen de régler le problème d'attente avant le scroll
 
     /**
      * Ajoute dynamiquement les layout des jours et les espaces sur les côtés pour
@@ -204,42 +210,11 @@ public class EdTLayout extends LinearLayout {
 
         this.addView(new Space(context), spaceP);
 
-        /*
-        this.setBackground(new EdTBackground(
-                (int) getResources().getDimension(R.dimen.daySpacing),
-                (int) getResources().getDimension(R.dimen.hourSpacing),
-                (int) getResources().getDimension(R.dimen.cornerWidth),
-                (int) getResources().getDimension(R.dimen.cornerHeight),
-                getResources().getColor(R.color.hourLine),
-                getResources().getColor(R.color.dayLine),
-                getResources().getColor(R.color.hourFontColor),
-                true,
-                -1,
-                null));
-
-
-        rectPaint.setColor(Color.BLACK);
-        rectPaint.setStrokeCap(Paint.Cap.SQUARE);
-        rectPaint.setStrokeWidth(10.0f);*/
-
 
         width = ((int) getResources().getDimension(R.dimen.daySpacing)) * 7
                 + ((int) getResources().getDimension(R.dimen.cornerWidth)) * 2;
         height = ((int) getResources().getDimension(R.dimen.hourSpacing)) * 12
                 + (int) getResources().getDimension(R.dimen.cornerHeight);
-
-        /*
-        scaleDetector = new ScaleGestureDetector(context, new ScaleListener());
-
-        gestureListener = new GestureDetector(context, new GestureListener());
-
-        scroller = new Scroller(context);
-        scroller.setFriction(1.f);
-
-        createScaleReducer();
-
-        displayEvents();
-        */
 
         globalInitialization(context);
 
@@ -308,29 +283,6 @@ public class EdTLayout extends LinearLayout {
 
         this.addView(new Space(context), spaceP);
 
-
-        /*rectPaint.setColor(Color.BLACK);
-        rectPaint.setStrokeCap(Paint.Cap.SQUARE);
-        rectPaint.setStrokeWidth(10.0f);
-
-        this.setBackground(new EdTBackground(
-                (int) getResources().getDimension(R.dimen.daySpacing),
-                (int) getResources().getDimension(R.dimen.hourSpacing),
-                (int) getResources().getDimension(R.dimen.cornerWidth),
-                (int) getResources().getDimension(R.dimen.cornerHeight),
-                getResources().getColor(R.color.hourLine),
-                getResources().getColor(R.color.dayLine),
-                getResources().getColor(R.color.hourFontColor),
-                true,
-                dayDispIndex,
-                null));
-
-
-        scaleDetector = new ScaleGestureDetector(context, new ScaleListener());
-
-        createScaleReducer();
-
-        displayEvents();*/
 
         globalInitialization(context);
 
@@ -440,24 +392,6 @@ public class EdTLayout extends LinearLayout {
         this.addView(new Space(context), spaceP);
 
 
-        /*this.setBackground(new EdTBackground(
-                daySpacing,
-                hourHeight,
-                (int) getResources().getDimension(R.dimen.cornerWidth),
-                (int) getResources().getDimension(R.dimen.cornerHeight),
-                getResources().getColor(R.color.hourLine),
-                getResources().getColor(R.color.dayLine),
-                getResources().getColor(R.color.hourFontColor),
-                false,
-                -1,
-                null));
-
-        scaleDetector = new ScaleGestureDetector(context, new ScaleListener());
-
-        createScaleReducer();
-
-        displayEvents();*/
-
         globalInitialization(context);
 
         Log.d("Debug", "EdTView init (Landscape Mode) completed.");
@@ -476,20 +410,13 @@ public class EdTLayout extends LinearLayout {
                 getResources().getColor(R.color.hourLine),
                 getResources().getColor(R.color.dayLine),
                 getResources().getColor(R.color.hourFontColor),
-                false,
+                !landscapeMode,
                 dayDispIndex,
                 null));
-
-        rectPaint.setColor(Color.BLACK);
-        rectPaint.setStrokeCap(Paint.Cap.SQUARE);
-        rectPaint.setStrokeWidth(10.0f);
 
         scaleDetector = new ScaleGestureDetector(context, new ScaleListener());
 
         gestureListener = new GestureDetector(context, new GestureListener());
-
-        scroller = new Scroller(context);
-        scroller.setFriction(1.f);
 
         createScaleReducer();
 
@@ -734,6 +661,9 @@ public class EdTLayout extends LinearLayout {
 
         Log.d("EdTLayout", "DayDisp mode DEACTIVATED");
 
+        initialDay = dayDispIndex; // on se rappelle du jour affiché pour scroller sur lui en mode initial
+        dayDispIndex = -1;
+
         changeToInitialMode(context);
     }
 
@@ -857,6 +787,34 @@ public class EdTLayout extends LinearLayout {
 
 
     /**
+     * Initialise le scroll horizontal pour mettre le jour d'aujourd'hui au milieu de l'écran
+     *
+     * Méthode appellée à la toute fin de la création de la view, lorsque que les chlidren ont été
+     * créés et inflated, on peut donc changer le scroll des scrollViews, etc...
+     */
+    @Override
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        super.onLayout(changed, l, t, r, b);
+
+        Log.d("EdTLayout", "layouting...  --------------------------------------");
+
+        if (dayDispIndex < 0 && !landscapeMode) {
+            // uniquement en mode initial
+
+            int screenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
+
+            if (initialDay < 0) {
+                // on centre le jour d'aujourd'hui
+                Hview.smoothScrollTo(cornerWidth + Calendar.getInstance().get(Calendar.DAY_OF_WEEK) * daySpacing - screenWidth / 2 + daySpacing / 2 , 0);
+            } else {
+                // on centre le jour que l'on souhaite
+                Hview.smoothScrollTo(cornerWidth + initialDay * daySpacing - screenWidth / 2 + daySpacing / 2, 0);
+            }
+        }
+    }
+
+
+    /**
      * Définit une taille fixe de l'EdT qui va être plus grande que l'écran.
      * 'width' et 'height' sont déterminés à l'init, en fonction des dimentions des heures et jours.
      * Les paramètres sont inutiles.
@@ -895,10 +853,6 @@ public class EdTLayout extends LinearLayout {
         }
         else {
 
-            // LALALALALALALAL THIS IS A TEST
-
-            Log.d("EdTLayout", "TouchEventHandler : 1 pointer event");
-
             if (event.getAction() == MotionEvent.ACTION_POINTER_UP) {
                 // après un mouvement à 2 doigts, le 1er est levé -> on ignore les mouvements du 2ème jusque au moment où il est levé
                 ignoreNextActions = true;
@@ -934,8 +888,6 @@ public class EdTLayout extends LinearLayout {
         @Override
         public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
 
-            Log.d("GestureListener", "scroll event : distance from initial point=" + Math.sqrt(Math.pow(e1.getX() - e2.getX(), 2) + Math.pow(e1.getY() - e2.getY(), 2)));
-
             Hview.scrollBy((int) distanceX, 0);
             Vview.scrollBy(0, (int) distanceY);
 
@@ -955,8 +907,6 @@ public class EdTLayout extends LinearLayout {
 
         @Override
         public boolean onDown(MotionEvent e) {
-
-            Log.d("GestureListener", "down event");
 
             if (flingHappened) {
                 // si un mouvment de fling a eu lieu, on l'arrête
@@ -1059,8 +1009,6 @@ public class EdTLayout extends LinearLayout {
                     // on veut passer en mode initial
 
                     Log.d("EdTLayout", "---------------------- DayDisp -> initial");
-
-                    dayDispIndex = -1;
 
                     // pas besoin de savoir si il aura un changement d'orientation,
                     // il faut juste avoir prédéfini le state avant pour s'assurer que si il y a
@@ -1229,6 +1177,7 @@ public class EdTLayout extends LinearLayout {
 
         state.putInt("dayDispIndex", dayDispIndex);
         state.putBoolean("landscapeMode", landscapeMode);
+        state.putInt("initialDay", initialDay);
 
         return state;
     }

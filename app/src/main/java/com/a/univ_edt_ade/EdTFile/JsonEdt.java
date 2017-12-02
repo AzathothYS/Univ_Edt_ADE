@@ -26,6 +26,8 @@ import java.util.Map;
 
 public class JsonEdt {
 
+    // TODO: à transformer en singleton, ou l'encapsuler dans un singleton, pour qu'il soit accessible par toutes les activités sans nouvelle instanciation
+
     public final String FILE_NAME = "emploi_du_temps.json";
     public File file;
 

@@ -4,6 +4,7 @@ import android.graphics.Canvas;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
+import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
@@ -25,13 +26,15 @@ public class EdTBackground extends Drawable {
 
     private final int daySpacing, hourSpacing, cornerWidth, cornerHeight;
 
+    private final int dayOffset;
+
     private Paint PaintDay, PaintHour = new Paint(), PaintText = new Paint();
     private int textSize;
 
     private final String[] days = {"lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"};
     private String[] dates = new String[7];
 
-    public int dayToDisp = -1;
+    private int dayToDisp = -1;
     private boolean printDates = true;
 
     public EdTBackground(int newDaySpacing, int newHourSpacing, int newCornerWidth, int newCornerHeight,
@@ -57,32 +60,44 @@ public class EdTBackground extends Drawable {
         PaintText.setTextAlign(Paint.Align.CENTER);
         PaintText.setTextSize(35.f);
 
-        textSize = PaintText.getFontMetricsInt().bottom - PaintText.getFontMetricsInt().top;
+
+        Rect textBounds = new Rect();
+        PaintText.getTextBounds("7", 0, 1, textBounds);
+        textSize = textBounds.height();
+
+        Log.d("EdTBackground", "textHeight=" + textSize);
+
 
         this.printDates = printDates;
 
         if (!printDates) {
             // on veut afficher l'EdT en mode landscape, donc pas de date et on divise par 2 le cornerHeight
             cornerHeight = newCornerHeight / 2;
+            dayOffset = 1 + (cornerHeight - textSize >> 1) / 2;     // >> 1 est pour une division par deux en ignorant le reste
+
         } else {
             cornerHeight = newCornerHeight;
+            dayOffset = (cornerHeight - textSize * 2 - textSize / 2) / 2; // on se met au milieu de l'espace dont on disposea
             setDates(cal);
         }
 
         if (dayToDisplay >= 0 && dayToDisplay <= 6)
             dayToDisp = dayToDisplay;
 
+
+        Log.d("EdTBackground", "dayOffset=" + dayOffset);
+
         Log.d("EdTBackground", "init finished");
     }
 
     @Override
     public void draw(@NonNull Canvas canvas) {
-        int height = getBounds().height();
-        int width = getBounds().width();
+        final int height = getBounds().height();
+        final int width = getBounds().width();
 
         int brush = cornerWidth;
 
-        Log.d("EdTBackground", "starting draw : day=" + dayToDisp + " - printDates=" + printDates);
+        //Log.d("EdTBackground", "starting draw : day=" + dayToDisp + " - printDates=" + printDates);
 
         if (dayToDisp == -1) {
             // on est en mode normal
@@ -91,24 +106,24 @@ public class EdTBackground extends Drawable {
             for (int i=0;i<6;i++) {
                 brush += daySpacing;
                 canvas.drawLine(brush, 0, brush, height, PaintDay);
-                canvas.drawText(days[i], brush - daySpacing / 2 + i, textSize + 4, PaintText);
+                canvas.drawText(days[i], brush - daySpacing / 2 + i, textSize + dayOffset, PaintText);
                 if (printDates)
-                    canvas.drawText(dates[i], brush - daySpacing / 2 + i, textSize * 2 + 4, PaintText);
+                    canvas.drawText(dates[i], brush - daySpacing / 2 + i, textSize * 2 + textSize / 2 + dayOffset, PaintText);
             }
-            canvas.drawText(days[6], brush + daySpacing / 2 + 6, textSize + 4, PaintText);
+            canvas.drawText(days[6], brush + daySpacing / 2 + 6, textSize + dayOffset, PaintText);
             if (printDates)
-                canvas.drawText(dates[6], brush + daySpacing / 2 + 6, textSize * 2 + 4, PaintText);
+                canvas.drawText(dates[6], brush + daySpacing / 2 + 6, textSize * 2 + textSize / 2 + dayOffset, PaintText);
 
             brush = cornerHeight;
 
         } else {
             // on ne veut afficher qu'un seul jour
-            canvas.drawText(days[dayToDisp], width / 2, textSize + 4, PaintText);
+            canvas.drawText(days[dayToDisp], width / 2, textSize + dayOffset, PaintText);
             if (printDates)
-                canvas.drawText(dates[dayToDisp], width / 2, textSize * 2 + 4, PaintText);
+                canvas.drawText(dates[dayToDisp], width / 2, textSize * 2 + textSize / 2 + dayOffset, PaintText);
         }
 
-        Log.d("EdTBackground", "done drawing dates");
+        //Log.d("EdTBackground", "done drawing dates");
 
 
         // 12 lignes indiquant les heures sur la longueur de l'EdT (de 8 à 19h)
@@ -119,7 +134,7 @@ public class EdTBackground extends Drawable {
             brush += hourSpacing;
         }
 
-        Log.d("EdTBackground", "done drawing hours");
+        //Log.d("EdTBackground", "done drawing hours");
 
 
     }
@@ -142,7 +157,7 @@ public class EdTBackground extends Drawable {
             dates[weekIndex] = dateF.format(cal.getTime());
             cal.add(Calendar.DAY_OF_WEEK, 1);
 
-            Log.d("setDates", "day n°" + weekIndex + " : " + dates[weekIndex]);
+            //Log.d("setDates", "day n°" + weekIndex + " : " + dates[weekIndex]);
         }
     }
 
