@@ -895,6 +895,8 @@ public class EdTLayout extends LinearLayout {
         }
         else {
 
+            // LALALALALALALAL THIS IS A TEST
+
             Log.d("EdTLayout", "TouchEventHandler : 1 pointer event");
 
             if (event.getAction() == MotionEvent.ACTION_POINTER_UP) {
