@@ -43,6 +43,7 @@ import android.widget.Space;
 import android.widget.Toast;
 
 import com.a.univ_edt_ade.EdTFile.Day;
+import com.a.univ_edt_ade.EdTFile.EdTStorage;
 import com.a.univ_edt_ade.EdTFile.Event;
 import com.a.univ_edt_ade.EdTFile.JsonEdt;
 import com.a.univ_edt_ade.EdTFile.Week;
@@ -58,8 +59,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 
 public class EdTLayout extends LinearLayout {
-
-    public static JsonEdt jEdT;
 
     public VScrollView Vview;
     public HScrollView Hview;
@@ -149,10 +148,7 @@ public class EdTLayout extends LinearLayout {
 
     // TODO: le background en mode landscape est faux
 
-    // TODO: LE SCROLLING A RESET LORSQUE L'ON SE MET EN MODE LANDSCAPE PUTAIN
-
-    // TODO: Mettre le Json parser dans un thread (Async?) car il y a une memory leak à chaque fois que l'on l'utilise
-    // TODO: mais d'abord faire de JsonEdT un singleton ou l'avoir encapsulé dans un singleton
+    // TODO: LE SCROLLING À RESET LORSQUE L'ON SE MET EN MODE LANDSCAPE PUTAIN
 
     // TODO: Créer mon propre GestureDetector, car c'est le seul moyen de régler le problème d'attente avant le scroll
 
@@ -673,6 +669,8 @@ public class EdTLayout extends LinearLayout {
     private void exitLandscapeMode(Context context) {
         Log.d("EdTLayout", "Landscape mode DEACTIVATED");
 
+        landscapeMode = false;
+
         changeToInitialMode(context);
     }
 
@@ -723,22 +721,21 @@ public class EdTLayout extends LinearLayout {
 
     /**
      * Ajoute les events des jours affichés à l'écran aux layouts
+     * Initialise EdTStorage si besoin
      */
     private void displayEvents() {
         //Snackbar.make(Hview, "MAKING JSON MAGIC", Snackbar.LENGTH_LONG)
         //        .setAction("Action", null).show();
 
-        Toast.makeText(getContext(), "MAKING JSON MAGIC", Toast.LENGTH_SHORT).show();
-
-        if (jEdT == null) {
-            Log.d("EdTLayout", "Récupération du Json");
-            jEdT = new JsonEdt(getContext());
-            jEdT.getJSONedt();
-        }
-
         Log.d("Debug", "TODAY is " + "2017-09-05" + " and week nb is " + "36");
 
-        Week today = jEdT.getWeek(36, 2017, true);
+        if (!EdTStorage.isEdTInitialised) {
+            Toast.makeText(getContext(), "MAKING JSON MAGIC", Toast.LENGTH_SHORT).show();
+
+            EdTStorage.getInstance().setEdT(getContext());
+        }
+
+        Week today = EdTStorage.getInstance().getWeek(36, 2017, true);
         Day[] WeekDays = today.getDays();
         Event[] Events;
 
@@ -992,8 +989,6 @@ public class EdTLayout extends LinearLayout {
                     // on veut passer en mode initial
 
                     Log.d("EdTLayout", "---------------------- landscape -> initial");
-
-                    landscapeMode = false;
 
                     // pas besoin de savoir si il aura un changement d'orientation,
                     // il faut juste avoir prédéfini le state avant pour s'assurer que si il y a

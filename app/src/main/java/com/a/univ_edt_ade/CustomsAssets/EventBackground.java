@@ -73,6 +73,8 @@ public class EventBackground extends Drawable {
     @Override
     public void draw(@NonNull Canvas canvas) {
 
+        // TODO: refaire tout ça mais de manière plus optimisée et stable... (déterminer le nombre de lignes dont on dispose dans le canvas pour simplifier sliceTextForDisplay)
+
         // bordures de l'event + couleur de fond
         RectF e = new RectF(0.f, 0.f, canvas.getWidth(), canvas.getHeight());
         rectBack.setColor(getBackColor(event, event.title));
@@ -289,7 +291,7 @@ public class EventBackground extends Drawable {
         int lastIndex = 0;
 
         if (text.endsWith(" ")) // il y a un risque d'avoir un index trop grand sinon
-            text.substring(0, text.length() -2);
+            text = text.substring(0, text.length());
 
         if (debug)
             Log.d("sliceTextDisplay", "started processing : " + text + "\n\n");
@@ -319,7 +321,7 @@ public class EventBackground extends Drawable {
                 //Log.d("sliceTextDisplay", "Final index = " + index + " - New working substring : '" + text.substring(index) + "'");
                 text = text.substring(0, index) + "\n" + text.substring(index + 1);
             }
-            //Log.d("sliceTextDisplay", "New text : \n" + text + "\n");ZZZZZZZZZZZ
+            //Log.d("sliceTextDisplay", "New text : \n" + text + "\n");
             index++; // on passe le nouveau '\n' et l'espace qui est juste après
             lastIndex = index;
 

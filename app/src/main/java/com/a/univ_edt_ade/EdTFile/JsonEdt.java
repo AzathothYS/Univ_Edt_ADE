@@ -26,13 +26,11 @@ import java.util.Map;
 
 public class JsonEdt {
 
-    // TODO: à transformer en singleton, ou l'encapsuler dans un singleton, pour qu'il soit accessible par toutes les activités sans nouvelle instanciation
-
     public final String FILE_NAME = "emploi_du_temps.json";
     public File file;
 
     public String edtInString = null;
-    public JSONArray edtJson = null;
+    private JSONArray edtJson = null;
 
     public String[] file_info = new String[2];
     private JSONObject[] Weeks;
@@ -45,16 +43,16 @@ public class JsonEdt {
 
             if (!file.exists()) {
                 file.createNewFile();
-                Log.println(Log.DEBUG, "Univ_Edt_ADE_TAG", "File " + FILE_NAME + " created in " +
+                Log.d("Univ_Edt_ADE_TAG", "File " + FILE_NAME + " created in " +
                         file.getAbsolutePath() + " as " + file.getName());
 
             } else {
-                Log.println(Log.DEBUG, "Univ_Edt_ADE_TAG", "File " + FILE_NAME + " already existed at " +
+                Log.d("Univ_Edt_ADE_TAG", "File " + FILE_NAME + " already existed at " +
                         file.getAbsolutePath() + " as " + file.getName());
             }
         }
         catch (Exception e){
-            Log.e("Exception", "File creation failed: " + e.toString());
+            Log.e("Exception", "File creation failed: " + e.toString(), e);
         }
     }
 

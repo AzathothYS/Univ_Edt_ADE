@@ -33,7 +33,7 @@ public class ViewEvent extends View {
 
     public String[] undisplayed;
 
-    public boolean debug = true;
+    public boolean debug = false;
 
     public ViewEvent(Context context) {
         super(context);
