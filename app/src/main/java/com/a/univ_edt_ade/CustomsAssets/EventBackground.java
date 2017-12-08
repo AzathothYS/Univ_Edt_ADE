@@ -12,17 +12,13 @@ import android.graphics.drawable.Drawable;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.ArrayMap;
 import android.util.Log;
 
-import com.a.univ_edt_ade.EdTFile.Event;
 import com.a.univ_edt_ade.R;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-
 /**
- * Created by 7 on 16/09/2017.
+ * Drawable derrière chaque Event
+ * Affiche le texte et définit la couleur de fond
  */
 
 public class EventBackground extends Drawable {
