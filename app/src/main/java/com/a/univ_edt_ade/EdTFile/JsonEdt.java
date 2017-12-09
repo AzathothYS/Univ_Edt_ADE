@@ -123,7 +123,7 @@ public class JsonEdt {
     public Week getWeek(int week_nb, int year, boolean IdontCare) {
 
         if (IdontCare) {
-            Log.d("DebugGetWeek", "Week length :" + Weeks.length);
+            //Log.d("DebugGetWeek", "Week length :" + Weeks.length);
             return toWeek(Weeks[0]);
         }
 
@@ -190,7 +190,7 @@ public class JsonEdt {
                         isEmpty = true;
 
                 days[i] = isEmpty ? null : Jdays.getString(j++);
-                Log.d("DaysOUT", "day n°" + i + " = " + days[i]);
+                //Log.d("DaysOUT", "day n°" + i + " = " + days[i]);
             }
         }
         catch (JSONException je) {

@@ -92,15 +92,13 @@ public class EdTBackground extends Drawable {
 
     @Override
     public void draw(@NonNull Canvas canvas) {
-        final int height = getBounds().height();
-        final int width = getBounds().width();
+        final int height = canvas.getHeight();
+        final int width = canvas.getWidth();
 
         int brush = cornerWidth;
 
-        //Log.d("EdTBackground", "starting draw : day=" + dayToDisp + " - printDates=" + printDates);
-
         if (dayToDisp == -1) {
-            // on est en mode normal
+            // on est en mode normal ou landscape
 
             // 6 lignes séparant les jours + les noms des jours
             for (int i=0;i<6;i++) {
@@ -123,8 +121,6 @@ public class EdTBackground extends Drawable {
                 canvas.drawText(dates[dayToDisp], width / 2, textSize * 2 + textSize / 2 + dayOffset, PaintText);
         }
 
-        //Log.d("EdTBackground", "done drawing dates");
-
 
         // 12 lignes indiquant les heures sur la longueur de l'EdT (de 8 à 19h)
         for (int i=0;i<12;i++) {
@@ -133,10 +129,6 @@ public class EdTBackground extends Drawable {
             canvas.drawText(i + 8 + ":00", width - cornerWidth / 2, brush + 13, PaintText);
             brush += hourSpacing;
         }
-
-        //Log.d("EdTBackground", "done drawing hours");
-
-
     }
 
     /**
@@ -156,8 +148,6 @@ public class EdTBackground extends Drawable {
         for (int weekIndex = 0; weekIndex < 7; weekIndex++) {
             dates[weekIndex] = dateF.format(cal.getTime());
             cal.add(Calendar.DAY_OF_WEEK, 1);
-
-            //Log.d("setDates", "day n°" + weekIndex + " : " + dates[weekIndex]);
         }
     }
 

@@ -26,6 +26,8 @@ import java.util.LinkedList;
 
 public class EventBackground extends Drawable {
 
+    // TODO : ajouter un mode d'affichage pour le mode Landscape
+
     private final ViewEvent event;
 
     private static final Paint normal = new Paint(), bold = new Paint(), small = new Paint(), rectBack = new Paint();

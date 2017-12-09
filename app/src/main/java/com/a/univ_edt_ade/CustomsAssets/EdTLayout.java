@@ -92,9 +92,6 @@ public class EdTLayout extends LinearLayout {
     private AtomicBoolean isScaleThreadRunning = new AtomicBoolean();
 
 
-    private boolean isScreenInLandscape = false;
-
-
     public EdTLayout(Context context) {
         super(context);
         init(context);
@@ -131,14 +128,10 @@ public class EdTLayout extends LinearLayout {
         } else {
             init(context);
         }
-
-        isScreenInLandscape = getScreenOrientation() == Configuration.ORIENTATION_LANDSCAPE;
     }
 
     // TODO: tout changer pour avoir les scrollviews DANS l'EdT, pour : afficher les jours et les heures en permanance, scaling DANS les scrollviews -> plus le bord blanc lorsque l'on dézoom,
     // plus dayDisp avec un frame layout ou non avec tous les jours affichés, mais on scroll horizontalement pour les parcourir (on change de jour après un certain déplacement)
-
-    // TODO: rajouter les events méthode pour associer le fichier/liste d'event voulu, une autre appellée après chaque changement de state et onFinishInflate pour les afficher
 
     // TODO: remettre le scrolling là où il était lorque l'on passe de landscape à initial
 
@@ -344,7 +337,7 @@ public class EdTLayout extends LinearLayout {
         daysP.width = daySpacing;
 
         int hourHeight = (int) getResources().getDimension(R.dimen.hourSpacing);
-        int cornerHeight = (int) getResources().getDimension(R.dimen.cornerHeight);
+        int cornerHeight = (int) getResources().getDimension(R.dimen.cornerHeight) / 2;
 
         if (hourHeight * 12 + cornerHeight > height) {
             while (hourHeight * 12 + cornerHeight > height) {
@@ -426,7 +419,7 @@ public class EdTLayout extends LinearLayout {
     private void changeToDayDispMode(Context context) {
         Log.d("Debug", "Resetting EdTLayout...");
 
-        this.removeAllViewsInLayout();
+        removeAllViewsInHierarchy();
         this.setBackgroundResource(0);  // reset background
 
         Log.d("Debug", "Changing to DayDisp EdTLayout...  ------------ DAYDISP STATE");
@@ -486,8 +479,9 @@ public class EdTLayout extends LinearLayout {
 
         Log.d("Debug", "Resetting EdTLayout...");
 
-        this.removeAllViewsInLayout();
+        removeAllViewsInHierarchy();
         this.setBackgroundResource(0);  // reset background
+
 
         Log.d("Debug", "Changing to Landscape EdTLayout...  ------------ Landscape STATE");
 
@@ -532,20 +526,20 @@ public class EdTLayout extends LinearLayout {
         daysP.width = daySpacing;
 
         int hourHeight = (int) getResources().getDimension(R.dimen.hourSpacing);
-        int cornerHeight = (int) getResources().getDimension(R.dimen.cornerHeight);
+        int cornerHeight = (int) getResources().getDimension(R.dimen.cornerHeight) / 2;
 
         if (hourHeight * 12 + cornerHeight > height) {
             while (hourHeight * 12 + cornerHeight > height) {
                 hourHeight--;
             }
-            Log.d("EdTLayout", "Init Landscape : previous hoursHeight=" + daysP.height + " - now=" + (hourHeight * 12 + cornerHeight));
+            Log.d("EdTLayout", "Init Landscape : previous hoursHeight=" + daysP.height + " - now=" + (hourHeight * 12 + cornerHeight) + " - screen height=" + height);
 
         } else if (hourHeight * 12 + cornerHeight < height) {
             while (hourHeight * 12 + cornerHeight < height) {
                 hourHeight++;
             }
             hourHeight--;
-            Log.d("EdTLayout", "Init Landscape : previous hoursHeight=" + daysP.height + " - now=" + (hourHeight * 12 + cornerHeight));
+            Log.d("EdTLayout", "Init Landscape : previous hoursHeight=" + daysP.height + " - now=" + (hourHeight * 12 + cornerHeight) + " - screen height=" + height);
 
         } else {
             Log.d("EdTLayout", "Init Landscape : EdT height matched with window height! Much wow!");
@@ -595,7 +589,7 @@ public class EdTLayout extends LinearLayout {
 
         Log.d("Debug", "Resetting EdTLayout...");
 
-        this.removeAllViewsInLayout();
+        removeAllViewsInHierarchy();
         this.setBackgroundResource(0);  // reset background
 
         Log.d("Debug", "Changing to the initial EdTLayout...  ------------ INITIAL STATE");
@@ -644,6 +638,7 @@ public class EdTLayout extends LinearLayout {
         height = ((int) getResources().getDimension(R.dimen.hourSpacing)) * 12
                 + (int) getResources().getDimension(R.dimen.cornerHeight);
 
+
         displayEvents();
 
         Log.d("EdTLayout", "Initial mode ACTIVATED");
@@ -672,6 +667,21 @@ public class EdTLayout extends LinearLayout {
         landscapeMode = false;
 
         changeToInitialMode(context);
+    }
+
+    /**
+     * Supprimme tous les Events et child directs de EdTLayout
+     */
+    private void removeAllViewsInHierarchy() {
+
+        for (int i=0;i<getChildCount();i++) {
+            if (getChildAt(i) instanceof ViewGroup)
+                ((ViewGroup) getChildAt(i)).removeAllViews();
+        }
+
+        for (int i=getChildCount() -1;i>=0;i--) {
+            removeViewAt(i);
+        }
     }
 
     /**
@@ -724,8 +734,6 @@ public class EdTLayout extends LinearLayout {
      * Initialise EdTStorage si besoin
      */
     private void displayEvents() {
-        //Snackbar.make(Hview, "MAKING JSON MAGIC", Snackbar.LENGTH_LONG)
-        //        .setAction("Action", null).show();
 
         Log.d("Debug", "TODAY is " + "2017-09-05" + " and week nb is " + "36");
 
@@ -771,8 +779,6 @@ public class EdTLayout extends LinearLayout {
         ViewEvent dispEvent = new ViewEvent(getContext());
         dispEvent.fromEvent(event);
         dispEvent.setBackground();
-
-        Log.d("DebugAddEventToDay", "dispEvent : start = " + dispEvent.getStart() + ", length = " +  dispEvent.getMinimumHeight());
 
         ViewGroup.MarginLayoutParams MLP = new ViewGroup.MarginLayoutParams(dispEvent.getMinimumWidth(), dispEvent.getMinimumHeight());
         MLP.setMargins(0, dispEvent.getStart(), 0, 0);
@@ -1129,27 +1135,6 @@ public class EdTLayout extends LinearLayout {
         return true;
     }
 
-    // TODO: à supprimmer ?
-    /**
-     * https://stackoverflow.com/a/29392593/8662187
-     * Méthode qui retourne systématiquement la bonne orientation de l'écran
-     */
-    protected int getScreenOrientation() {
-        Display getOrient = ((Activity) getContext()).getWindowManager().getDefaultDisplay();
-        Point size = new Point();
-
-        getOrient.getSize(size);
-
-        int orientation;
-        if (size.x < size.y) {
-            orientation = Configuration.ORIENTATION_PORTRAIT;
-        }
-        else {
-            orientation = Configuration.ORIENTATION_LANDSCAPE;
-        }
-
-        return orientation;
-    }
 
     /**
      * On détruit le thread ScaleReducer lorsque la view va se faire détruire
