@@ -31,8 +31,6 @@ public class ViewEvent extends View {
     public String salle = "none";
     public String[] desc;
 
-    public String[] undisplayed;
-
     public boolean debug = false;
 
     public ViewEvent(Context context) {
@@ -54,10 +52,9 @@ public class ViewEvent extends View {
 
         this.day = event.getDay();
         this.title = event.getTitre();
-        this.desc = event.getDesc().replace("\nPhysique", "").split("\n");
-        this.undisplayed = new String[this.desc.length];
         this.salle = event.getSalle().replace(",", ", "); // on ajoute un espace après chaque virgule pour faciliter l'affichage
         this.setHours(event.getHours());
+        this.desc = event.getDesc().replace("\nPhysique", "").split("([\r\n\t\f])+"); // on coupe la description après chaque retour à la ligne
 
         if (debug)
             Log.d("DebugViewEvent", "start: " + start + " length:" + length);

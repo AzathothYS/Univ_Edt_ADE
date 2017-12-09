@@ -16,8 +16,8 @@ import android.util.Log;
 
 import com.a.univ_edt_ade.R;
 
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
-import java.util.Objects;
 
 /**
  * Drawable derrière chaque Event
@@ -36,20 +36,21 @@ public class EventBackground extends Drawable {
 
     private static android.support.v4.util.ArrayMap<String, Integer> colorMap = new android.support.v4.util.ArrayMap<>();
 
-    public static boolean debug = false;
-
     static {
         normal.setTextSize(25.f);
         normal.setTypeface(Typeface.DEFAULT);
         normal.setTextAlign(Paint.Align.CENTER);
+        normal.setAntiAlias(true);
 
         bold.setTextSize(30.f);
         bold.setTypeface(Typeface.DEFAULT_BOLD);
         bold.setTextAlign(Paint.Align.CENTER);
+        bold.setAntiAlias(true);
 
-        small.setTextSize(23.f);
+        small.setTextSize(21.f);
         small.setTypeface(Typeface.DEFAULT);
         small.setTextAlign(Paint.Align.CENTER);
+        small.setAntiAlias(true);
 
         rectBack.setStrokeWidth(5.f);
 
@@ -79,10 +80,13 @@ public class EventBackground extends Drawable {
         }
     }
 
+    /**
+     * crée le background de l'event :
+     *  - définit la forme et couleur du fond
+     *  - affiche en fonction de la place disponible dans le canvas toutes les infos de l'event     *
+     */
     @Override
     public void draw(@NonNull Canvas canvas) {
-
-        // TODO: refaire tout ça mais de manière plus optimisée et stable... (déterminer le nombre de lignes dont on dispose dans le canvas pour simplifier sliceTextForDisplay)
 
         final int height = canvas.getHeight();
         final int width = canvas.getWidth();
@@ -92,12 +96,12 @@ public class EventBackground extends Drawable {
         rectBack.setColor(getBackColor(event, event.title));
         canvas.drawRoundRect(e, 25.f, 25.f, rectBack);
 
+
         // texte dans l'event (titre en gras, salle et horaires en police normale, description en petit, si il y a de la place
 
         if (height < boldHeight) {
-            // on ne peut pas afficher le titre
-
-            // TODO, genre afficher '...' seulement, si il a de la place
+            // on ne peut pas même pas afficher le titre
+            // TODO : non testé
 
             Rect textMesurer = new Rect();
             small.getTextBounds("...", 0, 3, textMesurer);
@@ -105,54 +109,77 @@ public class EventBackground extends Drawable {
             if (textMesurer.height() * 2 < height) {
                 canvas.drawText("...", height - canvasTextOutline / 2, width / 2, small);
             } else {
-                Log.d("EventBackground", "Event '" + event.title + "' is too small! ");
+                Log.d("EventBackground", "Event '" + event.title + "' is too small to print anything!");
+            }
+
+            return;
+        }
+
+        LinkedHashMap<String, Integer> linesToPrint = new LinkedHashMap<>();
+        // ligne , ID de la painture utilisée pour la ligne
+        // 1 : bold, 2 : normal, 3 : small
+
+        // on se positionne en haut au milieu du canvas, avec l'offset en Y
+        float totalTextHeight = canvasTextOutline * 4;
+        final int maxWidth = width - 4 * canvasTextOutline;
+
+        String[] textInLines;
+
+        // on affiche le titre
+        textInLines = sliceText(event.title, bold, maxWidth);
+        for (String line : textInLines) {
+            linesToPrint.put(line, 1);
+            totalTextHeight += boldHeight * 1.5;
+        }
+
+        if (totalTextHeight > height)
+            return;  // rien ne sert de continuer, car il n'y a déjà plus de place dans l'event
+
+        // on affiche l'heure, en supposant qu'il y a toujours suffisament de place
+        linesToPrint.put(event.hoursToString(), 2);
+        totalTextHeight += normalHeight * 1.5;
+
+        if (totalTextHeight > height)
+            return;
+
+        // on affiche la salle de l'event
+        textInLines = sliceText(event.salle, normal, maxWidth);
+        for (String line : textInLines) {
+            linesToPrint.put(line, 2);
+            totalTextHeight += normalHeight * 1.5;
+        }
+
+        // on ajoute la description si il reste de la place, et si elle n'est pas vide
+        if (totalTextHeight < height - smallHeight * 1.5 * event.desc.length && event.desc.length > 0) {
+
+            for (String text : event.desc) {
+                textInLines = sliceText(text, small, maxWidth);
+                for (String line : textInLines) {
+                    linesToPrint.put(line, 3);
+                    totalTextHeight += smallHeight * 1.5;
+                }
             }
         }
 
-        // on se positionne en haut au milieu du canvas, avec l'offset en Y
-        float brushY = canvasTextOutline + boldHeight;
+
+        // on affiche le texte en le centrant
+        float brushY = (height - totalTextHeight - 2 * canvasTextOutline) / 2 + 2 *canvasTextOutline + boldHeight;  // position de la 1ere ligne lorsque l'on centre le texte dans l'event
         final float brushX = width / 2;
 
-        String[] toPrint = {event.title, event.salle, event.hoursToString()};
-
-        boolean isTitle = true;
-        for (String text : toPrint) {
-
-            // tant que l'on n'a pas mis tout texte en lignes, on continue.
-            String[] temp;
-            do {
-                if (isTitle) {
-                    temp = sliceWord(text, bold, width - canvasTextOutline);
-                    canvas.drawText(temp[0], brushX, brushY, bold);
-                    brushY += boldHeight * 1.5; // le *1.5 est là pour mettre de l'espace entre les lignes
-                } else {
-                    temp = sliceWord(text, normal, width - canvasTextOutline);
-                    canvas.drawText(temp[0], brushX, brushY, normal);
+        for (String line : linesToPrint.keySet()) {
+            switch (linesToPrint.get(line)) {
+                case 1:
+                    canvas.drawText(line, brushX, brushY, bold);
+                    brushY += boldHeight * 1.5;
+                    break;
+                case 2:
+                    canvas.drawText(line, brushX, brushY, normal);
                     brushY += normalHeight * 1.5;
-                }
-
-                text = temp[1];
-            } while (!text.equals(""));    // tant qu'il y a de l'excès
-
-            if (brushY > height)
-                break;  // rien ne sert de continuer, car il n'y a déjà plus de place dans l'event
-
-            if (isTitle)
-                isTitle = false; // seule la 1ère itération contient le titre
-        }
-
-        // on ajoute la description si il reste de la place
-        if (brushY < height - smallHeight * 1.5 * event.desc.length && event.desc.length > 0) {
-            for (String text : event.desc) {
-
-                String[] temp;
-                do {
-                    temp = sliceWord(text, small, width - canvasTextOutline);
-                    canvas.drawText(temp[0], brushX, brushY, small);
+                    break;
+                case 3:
+                    canvas.drawText(line, brushX, brushY, small);
                     brushY += smallHeight * 1.5;
-
-                    text = temp[1];
-                } while (!text.isEmpty()); // TODO: checker si tout va bien: text.equals("") --> text.isEmpty()
+                    break;
             }
         }
     }
@@ -171,34 +198,14 @@ public class EventBackground extends Drawable {
 
 
     /**
-     * retourne 'word' coupé pour que sa longueur lorque affiché par 'paint" soit plus petite que
-     * 'maxwidth' - 'canvasTextOutline'
+     * découpe 'text' en lignes plus petites que 'maxWidth' lorsque 'text' est affiché avec 'paint'
      */
-    private String[] sliceWord(String word, Paint paint, int maxWidth) {
-
-        StringBuilder excess = new StringBuilder("");
-        int wordLength = word.length();
-
-        Rect textMesurer = new Rect();
-        paint.getTextBounds(word, 0, wordLength, textMesurer);
-
-        while (textMesurer.width() > maxWidth - canvasTextOutline) {
-            // tant que le mot est trop long, on lui enlève un caractère, que l'on rajpoute à l'excès
-            excess.insert(0, word.charAt(wordLength - 1));
-            word = word.substring(0, --wordLength);
-
-            paint.getTextBounds(word, 0, wordLength, textMesurer);
-        }
-
-        return new String[]{word, new String(excess)};
-    }
-
     private String[] sliceText(String text, Paint paint, int maxWidth) {
 
-        // TODO: implémenter cette fonction + skip l'heure, inutile car toujours suffisament petite?
-
-        // équivalent à '\s+' : match tous les espaces, retour à la ligne, etc... mais en plus on ignore ' - '
-        String[] wordList = text.split("(?:(?:[\r\n\t\f])|(?! - ) (?<! - ))+");
+        // le regex est équivalent à '\s+' : match tous les espaces, retour à la ligne, etc...
+        // mais en plus on ignore ' - ' et on coupe après chaque virqule en incluant l'espace après si il y en a un
+        // on ignore aussi les espaces placés avant des nombres (pour garder les n° et les noms des salle ensembles)
+        String[] wordList = text.split("((?! [0-9])(?! - ) (?<! - )|[\n\r\t\f]|(?<=,) *)+");
         LinkedList<String> lineList = new LinkedList<>();
 
         int wordListIndex = 0;
@@ -221,6 +228,7 @@ public class EventBackground extends Drawable {
 
                     String[] temp = sliceWord(processingWord.toString() + " " + word, paint, maxWidth);
                     lineList.add(temp[0]);
+                    processingWord.setLength(0);
 
                     do {
                         word = temp[1];
@@ -230,12 +238,11 @@ public class EventBackground extends Drawable {
                         lineList.add(temp[0]);
 
                         if (temp[1].isEmpty())
-                            break;  // il n'y a pas d'excès, on a terminé
+                            break;  // il n'y a plus d'excès, on a terminé
 
                         paint.getTextBounds(temp[1], 0, temp[1].length(), textMesurer);
                     } while (textMesurer.width() > maxWidth);
 
-                    processingWord.setLength(0);
                     processingWord.append(temp[1]);
 
                 } else {
@@ -246,17 +253,50 @@ public class EventBackground extends Drawable {
                     processingWord.append(word);
                 }
 
-            } else
-                processingWord.append(" ").append(word); // on rajoute 'word' à la ligne
+            } else {
+                // on rajoute 'word' à la ligne, sauf si le début d'une ligne
+                if (processingWord.length() == 0)
+                    processingWord.append(word);
 
-            if (wordListIndex++ >= wordList.length) {
+                else
+                    processingWord.append(" ").append(word);
+            }
+
+            if (++wordListIndex >= wordList.length) {
                 // on est à la fin de la liste, on check si la dernière ligne à bien été mise dans la liste
-                if (!lineList.getLast().equals(processingWord.toString()))
+                // LinkedList.getLast() crash si la liste est vide, d'où la 1ere condition
+                if (lineList.size() == 0)
+                    lineList.add(processingWord.toString());
+
+                else if (!lineList.getLast().equals(processingWord.toString()))
                     lineList.add(processingWord.toString());
             }
         }
 
         return lineList.toArray(new String[lineList.size()]);   // on transforme 'lineList' en une array de String
+    }
+
+    /**
+     * retourne 'word' coupé pour que sa longueur lorque affiché par 'paint" soit plus petite que
+     * 'maxwidth' - 'canvasTextOutline'
+     */
+    private String[] sliceWord(String word, Paint paint, int maxWidth) {
+
+        StringBuilder excess = new StringBuilder("");
+        int wordLength = word.length();
+
+        Rect textMesurer = new Rect();
+        paint.getTextBounds(word, 0, wordLength, textMesurer);
+
+        while (textMesurer.width() > maxWidth - canvasTextOutline) {
+            // tant que le mot est trop long, on lui enlève un caractère, que l'on rajpoute à l'excès
+            excess.insert(0, word.charAt(wordLength - 1));
+            word = word.substring(0, --wordLength);
+
+            paint.getTextBounds(word, 0, wordLength, textMesurer);
+        }
+
+        return new String[]{word, new String(excess)};
     }
 
 
@@ -302,8 +342,6 @@ public class EventBackground extends Drawable {
             }
 
             if (unsimilarities < 5) {
-                if (debug)
-                    Log.d("DebugSimilarKey", "str : '" + str + "' matched with : '" + key + "'");
                 return key;
             }
         }
