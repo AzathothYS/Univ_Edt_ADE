@@ -356,13 +356,15 @@ public class EdTLayout extends LinearLayout {
             Log.d("EdTLayout", "Init Landscape : EdT height matched with window height! Much wow!");
         }
 
-        daysP.height = hourHeight * 12 + cornerHeight;
+        daysP.height = hourHeight * 12 + cornerHeight / 2;
         spaceP.height = daysP.height;
 
         // on définit les dimensions de la relative layout parente des events
         ViewEvent.parentHourSpacing = hourHeight;
         ViewEvent.parentWidth = daySpacing;
         ViewEvent.parentCornerHeight = cornerHeight;
+
+        EventBackground.modeLandscape = true;
 
 
         TypedArray daysIDs = getResources().obtainTypedArray(R.array.days_ids);
@@ -545,13 +547,15 @@ public class EdTLayout extends LinearLayout {
             Log.d("EdTLayout", "Init Landscape : EdT height matched with window height! Much wow!");
         }
 
-        daysP.height = hourHeight * 12 + cornerHeight;
+        daysP.height = hourHeight * 12 + cornerHeight / 2;
         spaceP.height = daysP.height;
 
         // on définit les dimensions de la relative layout parente des events
         ViewEvent.parentHourSpacing = hourHeight;
         ViewEvent.parentWidth = daySpacing;
         ViewEvent.parentCornerHeight = cornerHeight;
+
+        EventBackground.modeLandscape = true;
 
 
         this.addView(new Space(context), spaceP);
@@ -665,6 +669,8 @@ public class EdTLayout extends LinearLayout {
         Log.d("EdTLayout", "Landscape mode DEACTIVATED");
 
         landscapeMode = false;
+        EventBackground.modeLandscape = false;
+
 
         changeToInitialMode(context);
     }
@@ -815,7 +821,6 @@ public class EdTLayout extends LinearLayout {
             }
         }
     }
-
 
     /**
      * Définit une taille fixe de l'EdT qui va être plus grande que l'écran.

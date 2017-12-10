@@ -26,11 +26,11 @@ import java.util.LinkedList;
 
 public class EventBackground extends Drawable {
 
-    // TODO : ajouter un mode d'affichage pour le mode Landscape
+    public static boolean modeLandscape = false;    // change l'affichage du texte si on est en mode landscape
 
     private final ViewEvent event;
 
-    private static final Paint normal = new Paint(), bold = new Paint(), small = new Paint(), rectBack = new Paint();
+    private static final Paint normal = new Paint(), bold = new Paint(), small = new Paint(), smallTitle = new Paint(), rectBack = new Paint();
 
     private static final int canvasTextOutline = 8; // un offset qui permet au texte de ne pas se coller aux parois de l'event
 
@@ -54,20 +54,26 @@ public class EventBackground extends Drawable {
         small.setTextAlign(Paint.Align.CENTER);
         small.setAntiAlias(true);
 
+        smallTitle.setTextSize(22.f);
+        smallTitle.setTypeface(Typeface.DEFAULT_BOLD);
+        smallTitle.setTextAlign(Paint.Align.CENTER);
+        smallTitle.setAntiAlias(true);
+
         rectBack.setStrokeWidth(5.f);
+        rectBack.setAntiAlias(true);
 
         // on définit la taille des polices, le '7' est utilisé car c'est un grand caractère, qui
         // est au moins aussi grand que tout les caractères que l'on va afficher, et le 'q' car
         // c'est le plpus bas
         Rect fontMesurer = new Rect();
 
-        bold.getTextBounds("q7", 0, 1, fontMesurer);
+        bold.getTextBounds("q7", 0, 2, fontMesurer); // TODO : end = 1 -> 2, peut-être que j'ai tout fait foiré dans les offsets de merde
         boldHeight = fontMesurer.height();
 
-        normal.getTextBounds("q7", 0, 1, fontMesurer);
+        normal.getTextBounds("q7", 0, 2, fontMesurer);
         normalHeight = fontMesurer.height();
 
-        small.getTextBounds("q7", 0, 1, fontMesurer);
+        small.getTextBounds("q7", 0, 2, fontMesurer);
         smallHeight = fontMesurer.height();
     }
 
@@ -85,7 +91,8 @@ public class EventBackground extends Drawable {
     /**
      * crée le background de l'event :
      *  - définit la forme et couleur du fond
-     *  - affiche en fonction de la place disponible dans le canvas toutes les infos de l'event     *
+     *  - affiche en fonction de la place disponible dans le canvas toutes les infos de l'event
+     *  - n'affiche que le titre en petit si on est en mode landscape
      */
     @Override
     public void draw(@NonNull Canvas canvas) {
@@ -98,6 +105,87 @@ public class EventBackground extends Drawable {
         rectBack.setColor(getBackColor(event, event.title));
         canvas.drawRoundRect(e, 25.f, 25.f, rectBack);
 
+        // si on est en mode landscape, on affiche tout ici et on ignore le reste
+        if (modeLandscape) {
+            // on affiche seulement le titre, dans une police de taille adaptée, le tout centré dans le canvas
+            // d'abord on détermine le nombre de lignes que l'on a avec la police 'smallTitle'
+            // ensuite si on a déjà suffisament de place on affiche le titre, sinon on le coupe pour le
+            // répartir sur plusieurs lignes, et si ce n'est toujours pas assez, on réduit encore la taille de 'smallTitle'
+
+            Rect fontMesurer = new Rect();
+            smallTitle.getTextBounds("q7", 0, 2, fontMesurer);
+            int smallTitleHeight = fontMesurer.height();
+
+            int nbOfPossibleLines = (int) ((height - 2 * canvasTextOutline) / (smallTitleHeight * 1.1f));
+
+            String[] slicedText;
+
+            if (nbOfPossibleLines >= 1) {
+
+                float currentFontSize = smallTitle.getTextSize();
+
+                while (true) {
+                    slicedText = sliceText(event.title, smallTitle, width - 2 * canvasTextOutline);
+
+                    if (slicedText.length <= nbOfPossibleLines)   // on a réussi à faire rentrer le texte dans le canvas
+                        break;
+                    else if (currentFontSize < 18.f)  // on s'arrête pour ne pas obtenir un texte illisible
+                        break;
+                    else {
+                        // on réessaye avec la même police mais en plus petit
+                        smallTitle.setTextSize(currentFontSize -= .5f);
+                        smallTitle.getTextBounds("q7", 0, 2, fontMesurer);
+                        smallTitleHeight = fontMesurer.height();
+
+                        // on met à jour le nombre de lignes disponibles
+                        nbOfPossibleLines = (int) ((height - 2 * canvasTextOutline) / (smallTitleHeight * 1.1f));
+                    }
+                }
+
+                if (currentFontSize < 18.f) {
+                    // on n'a pas réussi à avoir tout le texte dans l'event, on doit donc le couper
+
+                    // on "coupe" 'linesToPrint' pour avoir autant d'éléments que de lignes possibles
+                    for (int i=slicedText.length - 1;i>nbOfPossibleLines;i--)
+                        slicedText[i] = null;
+
+                    // on rajoute '...' soit sur la dernière ligne, soit à la fin de la seule ligne
+                    if (nbOfPossibleLines > 1 && slicedText.length > 1) {
+                        slicedText[slicedText.length -1] = "...";
+
+                    } else {
+                        // on remplace les 3 derniers caractères par '...'
+                        // on suppose que '...' prend moins de place que les 3 caractères remplacés
+                        slicedText[0] = slicedText[0].substring(0, slicedText[0].length() - 3) + "...";
+                    }
+                }
+
+            } else {
+                // on prend que ce qui peut tenir sur la seule ligne et on remplace les 3 derniers caractères par '...'
+                slicedText = sliceText(event.title, smallTitle, width - 2 * canvasTextOutline);
+                slicedText[0] = slicedText[0].substring(0, slicedText[0].length() - 3) + "...";
+
+                for (int i=1;i>slicedText.length;i--)
+                    slicedText[i] = null;
+            }
+
+            float brushY = (height - smallTitleHeight * 1.1f * slicedText.length - canvasTextOutline) / 2 + smallTitleHeight;
+            final float brushX = width / 2;
+
+            // on affiche les lignes en les centrant :
+            for (String line : slicedText) {
+                if (line == null)
+                    break; // on a terminé
+
+                canvas.drawText(line, brushX, brushY, smallTitle);
+                brushY += smallTitleHeight + 1.1f;
+            }
+
+            return;
+        }
+
+
+        // on affiche l'event en mode normal ou dayDisp
 
         // texte dans l'event (titre en gras, salle et horaires en police normale, description en petit, si il y a de la place
 
@@ -122,7 +210,7 @@ public class EventBackground extends Drawable {
         // 1 : bold, 2 : normal, 3 : small
 
         // on se positionne en haut au milieu du canvas, avec l'offset en Y
-        float totalTextHeight = canvasTextOutline * 4;
+        float totalTextHeight = canvasTextOutline * 2;
         final int maxWidth = width - 4 * canvasTextOutline;
 
         String[] textInLines;
@@ -131,7 +219,7 @@ public class EventBackground extends Drawable {
         textInLines = sliceText(event.title, bold, maxWidth);
         for (String line : textInLines) {
             linesToPrint.put(line, 1);
-            totalTextHeight += boldHeight * 1.5;
+            totalTextHeight += boldHeight * 1.2;
         }
 
         if (totalTextHeight > height)
@@ -139,7 +227,7 @@ public class EventBackground extends Drawable {
 
         // on affiche l'heure, en supposant qu'il y a toujours suffisament de place
         linesToPrint.put(event.hoursToString(), 2);
-        totalTextHeight += normalHeight * 1.5;
+        totalTextHeight += normalHeight * 1.2;
 
         if (totalTextHeight > height)
             return;
@@ -148,39 +236,39 @@ public class EventBackground extends Drawable {
         textInLines = sliceText(event.salle, normal, maxWidth);
         for (String line : textInLines) {
             linesToPrint.put(line, 2);
-            totalTextHeight += normalHeight * 1.5;
+            totalTextHeight += normalHeight * 1.2;
         }
 
         // on ajoute la description si il reste de la place, et si elle n'est pas vide
-        if (totalTextHeight < height - smallHeight * 1.5 * event.desc.length && event.desc.length > 0) {
+        if (totalTextHeight < height - smallHeight * 1.2 * event.desc.length && event.desc.length > 0) {
 
             for (String text : event.desc) {
                 textInLines = sliceText(text, small, maxWidth);
                 for (String line : textInLines) {
                     linesToPrint.put(line, 3);
-                    totalTextHeight += smallHeight * 1.5;
+                    totalTextHeight += smallHeight * 1.2;
                 }
             }
         }
 
 
         // on affiche le texte en le centrant
-        float brushY = (height - totalTextHeight - 2 * canvasTextOutline) / 2 + 2 *canvasTextOutline + boldHeight;  // position de la 1ere ligne lorsque l'on centre le texte dans l'event
+        float brushY = (height - totalTextHeight - 2 * canvasTextOutline) / 2 + canvasTextOutline + boldHeight;  // position de la 1ere ligne lorsque l'on centre le texte dans l'event
         final float brushX = width / 2;
 
         for (String line : linesToPrint.keySet()) {
             switch (linesToPrint.get(line)) {
                 case 1:
                     canvas.drawText(line, brushX, brushY, bold);
-                    brushY += boldHeight * 1.5;
+                    brushY += boldHeight * 1.2;
                     break;
                 case 2:
                     canvas.drawText(line, brushX, brushY, normal);
-                    brushY += normalHeight * 1.5;
+                    brushY += normalHeight * 1.2;
                     break;
                 case 3:
                     canvas.drawText(line, brushX, brushY, small);
-                    brushY += smallHeight * 1.5;
+                    brushY += smallHeight * 1.2;
                     break;
             }
         }
@@ -197,7 +285,6 @@ public class EventBackground extends Drawable {
     public int getOpacity() {
         return PixelFormat.OPAQUE;
     }
-
 
     /**
      * découpe 'text' en lignes plus petites que 'maxWidth' lorsque 'text' est affiché avec 'paint'

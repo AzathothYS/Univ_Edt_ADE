@@ -47,7 +47,7 @@ public class EdTBackground extends Drawable {
 
         PaintHour = new Paint();
         PaintHour.setStrokeCap(Paint.Cap.ROUND);
-        PaintHour.setAntiAlias(false);
+        PaintHour.setAntiAlias(true);
         PaintHour.setStrokeWidth(5.f);
 
         PaintDay = new Paint(PaintHour);
@@ -59,6 +59,7 @@ public class EdTBackground extends Drawable {
         PaintText.setTypeface(Typeface.DEFAULT);
         PaintText.setTextAlign(Paint.Align.CENTER);
         PaintText.setTextSize(35.f);
+        PaintText.setAntiAlias(true);
 
 
         Rect textBounds = new Rect();
