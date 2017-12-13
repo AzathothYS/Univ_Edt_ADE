@@ -6,4 +6,6 @@
     android:layout_height= "@dimen/textViewRListHeight"
     android:padding="@dimen/textViewRListPadding"
     android:gravity="center_vertical"
-    android:textSize="18sp"/>
+    android:textSize="18sp"
+    android:layout_marginRight="8dp"
+    android:layout_marginLeft="8dp"/>

@@ -1,11 +1,19 @@
 package com.a.univ_edt_ade.CustomsAssets;
 
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.VectorDrawable;
+import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
+import android.support.graphics.drawable.VectorDrawableCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
@@ -21,6 +29,9 @@ public class arboRListAdapter extends RecyclerView.Adapter<arboRListAdapter.View
 
     private String[] noms;
     private int TextColor;
+
+    public static Bitmap closedFolder = null;
+    public static Bitmap openedFolder = null;
 
     public arboRListAdapter(String[] str, int textColor) {
         noms = str;
@@ -59,6 +70,8 @@ public class arboRListAdapter extends RecyclerView.Adapter<arboRListAdapter.View
         @Override
         public void draw(@NonNull Canvas canvas) {
             canvas.drawLine(1, 8, 1, canvas.getHeight() - 8, linePaint);
+
+            canvas.drawBitmap(closedFolder, 2.f, 2.f, linePaint);
         }
 
         @Override
@@ -83,5 +96,24 @@ public class arboRListAdapter extends RecyclerView.Adapter<arboRListAdapter.View
             super(v);
             textView = v;
         }
+    }
+
+    public static void setDrawables(Context context, @DrawableRes int openedFolderID, @DrawableRes int closedFolderID) {
+        openedFolder = getBitmapFromDrawable(context, openedFolderID);
+        closedFolder = getBitmapFromDrawable(context, closedFolderID);
+    }
+
+    /**
+     * From : https://stackoverflow.com/a/38635587/8662187
+     */
+    private static Bitmap getBitmapFromDrawable(Context context, @DrawableRes int drawableId) {
+        Drawable drawable = ContextCompat.getDrawable(context, drawableId);
+
+        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+
+        return bitmap;
     }
 }
