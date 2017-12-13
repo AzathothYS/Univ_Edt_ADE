@@ -4,7 +4,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.a.univ_edt_ade.TestCustomLayout"
-    android:id="@+id/alalalala">
+    tools:context="com.a.univ_edt_ade.Activities.TestLauncherActivityWithMenu">
 
 </android.support.constraint.ConstraintLayout>

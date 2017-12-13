@@ -5,17 +5,24 @@
 
     <group android:checkableBehavior="single">
         <item
-            android:id="@+id/EdT_disp"
+            android:id="@+id/Menu_Main"
+            android:icon="@drawable/ic_menu_share"
+            android:title="Menu"/>
+        <item
+            android:id="@+id/Menu_EdT"
             android:icon="@drawable/ic_menu_camera"
             android:title="Emploi du Temps" />
         <item
-            android:id="@+id/arboSelect"
+            android:id="@+id/Menu_arboSelect"
             android:icon="@drawable/ic_menu_gallery"
             android:title="Arborescence Select" />
         <item
-            android:id="@+id/options"
+            android:id="@+id/Menu_options"
             android:icon="@drawable/ic_menu_manage"
             android:title="Options" />
+        <item
+            android:id="@+id/Menu_gridSelect"
+            android:title="Test Grid" />
     </group>
 
 </menu>

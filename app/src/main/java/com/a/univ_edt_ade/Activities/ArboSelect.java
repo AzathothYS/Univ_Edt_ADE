@@ -1,12 +1,13 @@
-package com.a.univ_edt_ade;
+package com.a.univ_edt_ade.Activities;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
 
-public class ArboSelect extends AppCompatActivity {
+import com.a.univ_edt_ade.R;
+import com.a.univ_edt_ade.CustomsAssets.arboRListAdapter;
+
+public class ArboSelect extends BaseActivity {
 
     private static String[] arboItemList= new String[5];
 
@@ -19,9 +20,10 @@ public class ArboSelect extends AppCompatActivity {
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_arbo_select);
+        addLayoutToActivity(R.layout.activity_arbo_select);
+        setMenuItemChecked(R.id.Menu_arboSelect);
 
         RecyclerView arboRList = (RecyclerView) findViewById(R.id.arboRList);
         arboRList.setHasFixedSize(true);

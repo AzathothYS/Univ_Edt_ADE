@@ -132,6 +132,7 @@ public class EdTLayout extends LinearLayout {
 
     // TODO: tout changer pour avoir les scrollviews DANS l'EdT, pour : afficher les jours et les heures en permanance, scaling DANS les scrollviews -> plus le bord blanc lorsque l'on dézoom,
     // plus dayDisp avec un frame layout ou non avec tous les jours affichés, mais on scroll horizontalement pour les parcourir (on change de jour après un certain déplacement)
+    // voir ici pour une implémentation peut-être mieux : https://developer.android.com/training/implementing-navigation/lateral.html
 
     // TODO: remettre le scrolling là où il était lorque l'on passe de landscape à initial
 

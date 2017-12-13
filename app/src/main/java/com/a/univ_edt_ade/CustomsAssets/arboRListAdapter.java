@@ -1,4 +1,4 @@
-package com.a.univ_edt_ade;
+package com.a.univ_edt_ade.CustomsAssets;
 
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
@@ -10,6 +10,8 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import com.a.univ_edt_ade.R;
 
 /**
  * Adapter pour la RecyclerList affichant l'arborescence d'ADE

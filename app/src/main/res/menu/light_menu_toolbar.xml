@@ -8,4 +8,6 @@
         app:showAsAction="never" />
 
     <item android:title="SWAGG" />
+
+    <item android:title="ULTRA mode" />
 </menu>

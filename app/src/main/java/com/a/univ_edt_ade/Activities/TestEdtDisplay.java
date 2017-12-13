@@ -1,4 +1,4 @@
-package com.a.univ_edt_ade;
+package com.a.univ_edt_ade.Activities;
 
 import android.content.Intent;
 import android.graphics.Point;
@@ -10,7 +10,6 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -25,7 +24,6 @@ import android.widget.ScrollView;
 import android.widget.Toast;
 
 import com.a.univ_edt_ade.CustomsAssets.CustomToolbar;
-import com.a.univ_edt_ade.CustomsAssets.DebugCustomLayout;
 import com.a.univ_edt_ade.CustomsAssets.EdTBackground;
 import com.a.univ_edt_ade.CustomsAssets.HScrollView;
 import com.a.univ_edt_ade.CustomsAssets.MenuDrawer;
@@ -35,10 +33,12 @@ import com.a.univ_edt_ade.EdTFile.Day;
 import com.a.univ_edt_ade.EdTFile.Event;
 import com.a.univ_edt_ade.EdTFile.JsonEdt;
 import com.a.univ_edt_ade.EdTFile.Week;
+import com.a.univ_edt_ade.R;
+import com.a.univ_edt_ade.TestGridView;
 
 import java.util.Calendar;
 
-public class EdtDisplay extends AppCompatActivity
+public class TestEdtDisplay extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     JsonEdt edtFile;
@@ -272,17 +272,17 @@ public class EdtDisplay extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.EdT_disp) {
+        if (id == R.id.Menu_EdT) {
 
-        } else if (id == R.id.arboSelect) {
+        } else if (id == R.id.Menu_arboSelect) {
             //Intent toArboSelect = new Intent(this, ArboSelect.class);
             //startActivity(toArboSelect);
 
-            Intent toDebugCustomLayout = new Intent(this, TestNestedScrollView.class);
+            Intent toDebugCustomLayout = new Intent(this, TestGridView.class);
             startActivity(toDebugCustomLayout);
 
-        } else if (id == R.id.options) {
-            Intent toTestNavDrawer = new Intent(this, TestNavDrawer.class);
+        } else if (id == R.id.Menu_options) {
+            Intent toTestNavDrawer = new Intent(this, EdTDisplay.class);
             startActivity(toTestNavDrawer);
         }
 

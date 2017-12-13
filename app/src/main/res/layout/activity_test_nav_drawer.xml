@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context="com.a.univ_edt_ade.TestNavDrawer"
+    tools:context="com.a.univ_edt_ade.Activities.EdTDisplay"
     app:layout_constraintBottom_toBottomOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"
@@ -21,7 +21,5 @@
         android:scrollbars="none">
 
     </com.a.univ_edt_ade.CustomsAssets.HScrollView>
-
-
 
 </com.a.univ_edt_ade.CustomsAssets.VScrollView>

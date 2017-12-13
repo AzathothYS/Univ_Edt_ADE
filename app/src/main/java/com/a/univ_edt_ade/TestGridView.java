@@ -1,17 +1,19 @@
 package com.a.univ_edt_ade;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.RelativeLayout;
 
-public class TestGridView extends AppCompatActivity {
+import com.a.univ_edt_ade.Activities.BaseActivity;
+
+public class TestGridView extends BaseActivity {
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_test_grid_view);
+        addLayoutToActivity(R.layout.activity_test_grid_view);
+        setMenuItemChecked(R.id.Menu_gridSelect);
 
         RelativeLayout relativeLayout = (RelativeLayout) findViewById(R.id.RLayout);
         RelativeLayout relativeLayout2 = (RelativeLayout) findViewById(R.id.RLayout2);

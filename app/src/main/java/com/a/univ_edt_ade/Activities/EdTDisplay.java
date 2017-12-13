@@ -1,26 +1,27 @@
-package com.a.univ_edt_ade;
+package com.a.univ_edt_ade.Activities;
 
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ScrollView;
 
+import com.a.univ_edt_ade.Activities.BaseActivity;
 import com.a.univ_edt_ade.CustomsAssets.EdTLayout;
 import com.a.univ_edt_ade.CustomsAssets.HScrollView;
 import com.a.univ_edt_ade.CustomsAssets.VScrollView;
+import com.a.univ_edt_ade.R;
 
-public class TestNavDrawer extends AppCompatActivity {
+public class EdTDisplay extends BaseActivity {
 
     private EdTLayout EdT;
     private VScrollView Vview;
     private HScrollView Hview;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_test_nav_drawer);
+        addLayoutToActivity(R.layout.activity_test_nav_drawer);
+        setMenuItemChecked(R.id.Menu_EdT);
 
         Vview = (VScrollView) findViewById(R.id.EdTVview);
         Hview = (HScrollView) findViewById(R.id.EdTHview);
