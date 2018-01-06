@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-
-<android.support.design.widget.CoordinatorLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -9,13 +8,56 @@
     tools:context="com.a.univ_edt_ade.Activities.ArboSelect"
     app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
+    <android.support.v7.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/card_root">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_gravity="center_vertical"
+            app:srcCompat="@drawable/ic_folder_open_black_24dp"
+            android:contentDescription="Path"/>
+
+        <TextView
+            android:id="@+id/root_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="40dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="40dp"
+            android:text="\\"
+            android:textSize="18sp"/>
+
+        <!-- fait en sorte que la card view garde une taille minimum -->
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="@dimen/arbo_item_height" />
+
+    </android.support.v7.widget.CardView>
+
     <android.support.v7.widget.RecyclerView
         android:id="@+id/arboRList"
+
+        android:scrollbars="vertical"
+
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:clipToPadding="false"
-        android:paddingTop="8dp">
+        android:layout_below="@+id/card_root">
 
     </android.support.v7.widget.RecyclerView>
 
-</android.support.design.widget.CoordinatorLayout>
+    <ProgressBar
+        android:id="@+id/loadingCircle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:indeterminateOnly="true" />
+
+</RelativeLayout>

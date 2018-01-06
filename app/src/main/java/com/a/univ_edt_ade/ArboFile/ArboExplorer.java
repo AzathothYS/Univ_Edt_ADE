@@ -1,10 +1,8 @@
 package com.a.univ_edt_ade.ArboFile;
 
-import android.content.Context;
 import android.util.Log;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.regex.Matcher;
@@ -36,8 +34,6 @@ import java.util.regex.Pattern;
 
 public class ArboExplorer {
 
-    private static final String FILE_NAME = "arbo_ADE.txt";
-
     private static final Matcher indent;
 
     static {
@@ -49,55 +45,65 @@ public class ArboExplorer {
     /**
      * retient les numéros des lignes où les éléments du dossier où l'on se trouve commencent
      */
-    private LinkedList<Integer> folderItemList = new LinkedList<>();
+    //private LinkedList<Integer> folderItemList = new LinkedList<>();
 
     /**
      * retient les numéros des lignes des dossiers parents au dossier actif
      */
-    private LinkedList<Integer> arboList = new LinkedList<>();
+    //private LinkedList<Integer> arboList = new LinkedList<>();
 
     /**
-     * liste des numéros de lignes de la root du fichier
+     * Contient la liste de tous les noms des fichiers et dossiers contenus dans les dossiers
+     * parcourus
+      */
+    private static final LinkedList<String[]> Arborescence_Names = new LinkedList<>();
+
+    /**
+     * Même chose que 'Arborescence_Names' mais pour les indices des lignes des objets
      */
-    private Integer[] rootLines;
-    private String[] rootNames;
+    private static final LinkedList<Integer[]> Arborescence_Indexes = new LinkedList<>();
+
+    /**
+     * Contient les indices des lignes des dossiers que l'on a parcouru
+     */
+    private static final LinkedList<Integer> Arborescence_Path = new LinkedList<>();
+
+    /**
+     * Contient les noms des dossiers que l'on a parcouru
+     */
+    private static final LinkedList<String> Path_Names = new LinkedList<>();
+
 
     private FileLineReader lineReader; // TODO : voir si il y a besoin de rajouter un 'reader.close' à la fin
 
-    public ArboExplorer(Context context) {
+    public ArboExplorer(File file) {
 
         Log.d("ArboExplorer", "Opening Arborescence file...");
-        try {
-            File file = new File(context.getExternalFilesDir(null), FILE_NAME);
 
-            if (!file.exists())
-                throw new FileNotFoundException("arbo_ADE.txt not found!");
+        lineReader = new FileLineReader(file);
 
-            lineReader = new FileLineReader(file);
+        fileInfo = lineReader.readLine();
 
-            fileInfo = lineReader.readLine();
+        long start = System.currentTimeMillis();
 
-            arboList.add(1); // nécessaire pour 'obtainFolderContents'
+        setRootLines();
 
-            long start = System.currentTimeMillis();
-
-            setRootLines();
-
-            Log.d("FileLineReader", "Took " + (System.currentTimeMillis() - start) + " ms to initialise ArboExplorer.");
-
-        } catch (IOException e){
-            Log.e("Exception", "File creation failed: " + e.toString(), e);
-        }
+        Log.d("FileLineReader", "Took " + (System.currentTimeMillis() - start) + " ms to initialise ArboExplorer.");
 
         Log.d("ArboExplorer", "Finished Arborescence initialisation. File info : " + fileInfo);
     }
 
 
+
     private void setRootLines() {
+
+        // TODO : voir pour le faire dans un buffered reader pour gagner en efficacité
+
         LinkedList<Integer> rootLineList = new LinkedList<>();
         LinkedList<String> rootNamesList = new LinkedList<>();
 
-        rootLineList.add(arboList.getFirst());
+        rootLineList.add(1); // la 1ere ligne est celle juste après le descripteur du fichier
+        rootNamesList.add(lineReader.readLine()); // le descripteur du fichier à déjà été lu
 
         // on parcourt tout le fichier à la recherche de lignes qui n'ont pas d'indentation
         // ça prend pas mal de ressources d'où le fait qu'on le fait qu'une seule fois
@@ -107,10 +113,10 @@ public class ArboExplorer {
             line = lineReader.readLine();
             switch (getIndent(line)) {
                 case 0:
-                    rootLineList.add(lineReader.getLineNumber());
+                    rootLineList.add(lineReader.getLineNumber() - 1); // -1 car le pointeur c'est déplacé pour la ligne suivante
                     rootNamesList.add(line);
 
-                    Log.d("ArboExplorer", "Added '" + line + "' of line " + line + " in root index.");
+                    Log.d("ArboExplorer", "Added '" + line + "' of line " + lineReader.getLineNumber() + " in root index.");
 
                     break;
 
@@ -120,9 +126,12 @@ public class ArboExplorer {
             }
         }
 
-        rootLines = rootLineList.toArray(new Integer[rootLineList.size()]);
-        rootNames = rootNamesList.toArray(new String[rootNamesList.size()]);
+        Arborescence_Indexes.add(rootLineList.toArray(new Integer[rootLineList.size()]));
+        Arborescence_Names.add(rootNamesList.toArray(new String[rootNamesList.size()]));
     }
+
+
+    private boolean isThereAProblem = false;
 
     /**
      * retourne les dossiers et fichiers (avec un '__' au début) directements contenus dans le
@@ -133,23 +142,34 @@ public class ArboExplorer {
      */
     public String[] obtainFolderContents() {
 
-        if (arboList.size() == 1) {
+        // TODO : quelque fois il y a des erreurs, qui peuvent se résolver en retournant au root, ces
+        // erreurs se manifestent par du texte de la 1ere ligne (checksum) qui se retrouve dans le path
+        // et d'autres cardViews... à régler.
+
+        if (Arborescence_Path.size() == 0) {
             Log.d("ArboExplorer", "Returning root folder's content...");
-            return rootNames;
+            return Arborescence_Names.get(0);
         }
 
-        Log.d("ArboExplorer", "Getting contents of folder at line " + arboList.getLast());
+        if (Arborescence_Names.size() - 1 == Arborescence_Path.size()) {
+            // le contenu du dossier est déjà présent dans 'Arborescence_Names'
+            return Arborescence_Names.getLast();
+        }
 
-        LinkedList<String> output = new LinkedList<>();
-        folderItemList.clear();
+        // on doit récupérer le contenu du nouveau dossier
 
-        lineReader.setLineNumber(arboList.getLast()); // on revient au début du dossier
+        Log.d("ArboExplorer", "Getting contents of folder at line " + Arborescence_Path.getLast());
+
+        LinkedList<String> output_Names = new LinkedList<>();
+        LinkedList<Integer> output_Indexes = new LinkedList<>();
+
+        lineReader.setLineNumber(Arborescence_Path.getLast()); // on revient au début du dossier
 
         String line = lineReader.readLine();
         int targetIndent = getIndent(line) + 1; // on prend l'indentation du dossier et on rajoute 1 pour l'indentation de tous ses enfants
 
-        Log.d("ArboExplorer", "Target indent of files inside of folder : " + targetIndent);
-        Log.d("ArboExplorer", "Name of folder : '" + line + "'");
+        //Log.d("ArboExplorer", "Target indent of files inside of folder : " + targetIndent);
+        //Log.d("ArboExplorer", "Name of folder : '" + line + "'");
 
         int lineIndent;
         while (line != null) {
@@ -158,8 +178,8 @@ public class ArboExplorer {
             lineIndent = getIndent(line);
 
             if (lineIndent == targetIndent) {
-                output.add(removeIndent(line, targetIndent));
-                folderItemList.add(lineReader.getLineNumber() - 1);
+                output_Names.add(removeIndent(line, targetIndent));
+                output_Indexes.add(lineReader.getLineNumber() - 1); // -1 car on vient de passer la ligne en question
 
             } else if (lineIndent < targetIndent) {
                 // on a atteint un fichier/dossier se trouvant en dehors de notre dossier, donc la fin de notre dossier
@@ -167,57 +187,108 @@ public class ArboExplorer {
             }
         }
 
-        Log.d("ArboExplorer", "Got " + output.size() + " items from folder at line " + arboList.getLast());
 
-        return output.toArray(new String[output.size()]);
+        if (output_Names.size() == 0) {
+            Log.d("ArboExplorer", "ERROR ? Got 0 items out of the folder at line " + Arborescence_Path.getLast());
+
+            lineReader.setLineNumber(Arborescence_Path.getLast());
+            line = lineReader.readLine();
+
+
+            if (!Path_Names.getLast().equals(line)) {
+                // le path a été affecté par le problème
+                Path_Names.removeLast();
+                Path_Names.add(line);
+            }
+
+
+            Log.d("ArboExplorer", "Content of line at " + Arborescence_Path.getLast() + ": '" + line + "'");
+
+            int initIndent = getIndent(line);
+            line = lineReader.readLine();
+            int nextIndent = getIndent(line);
+
+            if (initIndent >= nextIndent) {
+                Log.d("ArboExplorer", "Everything is fine, folder is really empty! :" +
+                        "\r\n    Indent of folder : " + initIndent +
+                        "\r\n    Next line : '" + line + "'" +
+                        "\r\n    Indent of the next line : " + nextIndent);
+
+            } else if (!isThereAProblem){
+                Log.d("ArboExplorer", "Nope, folder isn't empty! :" +
+                        "\r\n    Indent of folder : " + initIndent +
+                        "\r\n    Next line : '" + line + "'" +
+                        "\r\n    Indent of the next line : " + nextIndent);
+
+                lineReader.setLineNumber(Arborescence_Path.getLast());
+
+                Log.d("ArboExplorer", "Retrying...");
+
+                isThereAProblem = true;
+
+                return obtainFolderContents();
+
+            } else {
+                Log.e("ArboExplorer", "The problem is still here! Could not retrieve contents of folder at line " + Arborescence_Path.getLast() + ".",
+                        new IOException("Unable to retrieve the content of folder at line " + Arborescence_Path.getLast()));
+            }
+        }
+
+        Log.d("ArboExplorer", "Got " + output_Names.size() + " items from folder at line " + Arborescence_Path.getLast());
+
+        Arborescence_Names.add(output_Names.toArray(new String[output_Names.size()]));
+        Arborescence_Indexes.add(output_Indexes.toArray(new Integer[output_Indexes.size()]));
+
+        if (isThereAProblem)
+            isThereAProblem = false;
+
+        return Arborescence_Names.getLast();
     }
 
     /**
-     * Déplace le curseur à index de l'enfant voulu, puis retourne son contenu
+     * Déplace le curseur à index de l'enfant voulu
      * Assume que l'enfant est bien un dossier
-     * Si l'on veut aller dans un child du dossier root, on utilise les numéros préenregistrés de
-     * 'rootLines'
      */
-    public String[] goIntoChildFolder(int indexOfChild) {
+    public void goIntoChildFolder(int indexOfChild) {
 
-        if (arboList.size() == 1) {
-            // on veut accféder à un child du dossier root
+        int targetLine = Arborescence_Indexes.getLast()[indexOfChild];
 
-            if (indexOfChild >= rootLines.length)
-                throw new IndexOutOfBoundsException("index '" + indexOfChild + "' is invalid in folder at line " + arboList.getLast());
+        lineReader.setLineNumber(targetLine);
+        Arborescence_Path.add(targetLine);
 
-            lineReader.setLineNumber(rootLines[indexOfChild]);
-
-        } else {
-
-            if (indexOfChild >= folderItemList.size())
-                throw new IndexOutOfBoundsException("index '" + indexOfChild + "' is invalid in folder at line " + arboList.getLast());
-
-            lineReader.setLineNumber(folderItemList.get(indexOfChild));
-            arboList.add(lineReader.getLineNumber()); // on rentre dans le dossier
-        }
-
-        return obtainFolderContents();
+        Path_Names.add(lineReader.readLine());
+        lineReader.previousLine();
     }
 
     /**
      * Remonte vers le dossier parent
+     *
+     * Supprime le dernier élément de 'Arborescence_Names', 'Arborescence_Indexes' et
+     * 'Arborescence_Path', sauf si on se trouve dans le dossier root, dans ce cas on ne fait rien.
+     * Déplace le pointeur du reader vers le dossier précédant
      */
-    public String[] goToParentFolder() {
-        if (arboList.size() > 1) {
-            // on n'est pas déjà dans le dossier root
-            arboList.removeLast();
-            lineReader.setLineNumber(arboList.getLast());
+    public boolean goToParentFolder() {
 
-            return obtainFolderContents();
+        if (Arborescence_Path.size() == 0)
+            return false; // on est dans le dossier root
 
-        } else {
-            return rootNames; // on utilise la liste déjà faite, pour éviter de devoir parcourir à nouveau tout le fichier pour obtenir le dossier root
-        }
+        Arborescence_Path.removeLast();
+        Arborescence_Indexes.removeLast();
+        Arborescence_Names.removeLast();
+        Path_Names.removeLast();
+
+        if (Arborescence_Path.size() == 0)
+            lineReader.setLineNumber(1); // on se retrouve dans le dossier parent
+        else
+            lineReader.setLineNumber(Arborescence_Path.getLast());
+
+        return true;
     }
 
-
-    private int getIndent(String str) {
+    /**
+     * Retourne le nombre de quadruples espaces présents au début de 'str'
+     */
+    private static int getIndent(String str) {
         if (str == null)
             return 420; // utilisé par 'setRootLines' pour savoir quand on a parcouru tout le fichier
 
@@ -230,12 +301,45 @@ public class ArboExplorer {
         return patternFindings;
     }
 
-    private String removeIndent(String str, int indent) {
-        if (indent >= 0) {
+    /**
+     * Retourne 'str' mais sans l'indentation
+     */
+    private static String removeIndent(String str, int indent) {
+        if (indent == 0) {
+            return str;
+
+        } else if (indent > 0) {
             return str.substring(4 * indent - 1);
+
         } else {
             // on n'a pas précisé d'indentation, on doit d'abord la déterminer, puis on coupe
-            return str.substring(4 * getIndent(str) - 1);
+            return removeIndent(str, getIndent(str));
         }
+    }
+
+    /**
+     * Retourne le Path sous forme de chaîne de caractère, avec chaque dossiers séparés par un slash
+     */
+    public static String getPath() {
+        if (Path_Names.size() > 0) {
+            StringBuilder output = new StringBuilder();
+
+            for (String fileName : Path_Names) {
+
+                fileName = removeIndent(fileName, -1);
+
+                // on envèle un éventuel espace au début du nom du fichier, car sinon c'est moche
+                if (fileName.startsWith(" "))
+                    output.append(fileName.substring(1));
+                else
+                    output.append(fileName);
+
+                output.append('\\');
+            }
+
+            return new String(output);
+
+        } else
+            return "";
     }
 }

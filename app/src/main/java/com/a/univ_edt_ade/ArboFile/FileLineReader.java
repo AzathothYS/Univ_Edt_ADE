@@ -49,8 +49,36 @@ public class FileLineReader {
             e.printStackTrace();
         }
 
+        tests();
+
         setLineNumber(0);
     }
+
+
+    void tests() {
+        int index;
+        for (int i=0;i<20;i++) {
+
+            index = (int) (Math.random() * lineCount);
+
+            setLineNumber(index);
+
+            Log.d("FileLineReader", "Line n°" + index + " = '" + readLine() + "'");
+        }
+
+        for (int i=0;i<10;i++) {
+            setLineNumber(i* 500);
+            Log.d("FileLineReader", "Line n°" + i * 500 + " = '" + readLine() + "'");
+        }
+    }
+
+
+
+
+
+
+
+
 
     /**
      * Définit 'lineLengths', 'line500indexes', 'lineCount' et 'charCount'
@@ -59,7 +87,7 @@ public class FileLineReader {
      */
     private void setConstants() {
         try {
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
+            BufferedReader bufferedReader = new BufferedReader(new FileReader(file)); // TODO : voir si augmenter la taille du buffer ne surcharge par trop et accélère les choses
 
             long start = System.nanoTime();
 
@@ -193,7 +221,7 @@ public class FileLineReader {
             Log.e("FileLineReader", "An error occured when trying to skip end line chars at line n°" + lineNb, e);
         }
 
-        nextLine(); // on incrémente le l'offset par celui de la ligne actuelle
+        nextLine(); // on incrémente l'offset par celui de la ligne actuelle
 
         return output;
     }
@@ -247,6 +275,13 @@ public class FileLineReader {
 
             int c = b;
 
+
+            if (i+1 > byteBuffer.length) // le buffer s'arrête avant de pouvoir terminer le décodage du caractère
+                Log.e("FileLineReader", "ENCODING ERROR at line n°" + lineNb + ", at byte " + i +
+                        ".\r\n Theorical length of char : " + nbBytes + " - but line length is " + byteBuffer.length,
+                        new IOException("Error in encoding of char at byte " + i + " in line " + lineNb));
+
+
             // comme notre byte initial est inclut dans le nombre 'nbBytes', on prend les 'nbBytes -1'
             // bytes suivants pour déencoder notre caractère
             for (int j=i+1;j<nbBytes+i;j++) {
@@ -273,6 +308,9 @@ public class FileLineReader {
      * Utilise 'nextLine' ou 'previousLine' si la ligne souhaitée est juste à côté de la ligne actuelle
      */
     public void setLineNumber(int newNb) {
+
+        Log.d("FileLineReader", "Setting line to " + newNb);
+
         if (newNb >= lineCount - 1 || newNb < 0)
             return;
 
@@ -298,32 +336,28 @@ public class FileLineReader {
      * Incrémente le pointeur du reader si on est pas à la fin du fichier
      * Update 'isAtEOF' si on vient d'atteindre la fin du fichier
      */
-    public boolean nextLine() {
+    public void nextLine() {
         if (isAtEOF)
-            return false;
+            return;
 
         // l'offset de la ligne précédante s'ajoute à offset pour avoir la position de la nouvelle ligne
         charOffset += lineOffset[lineNb++];
 
         if (lineNb == lineCount - 1)
             isAtEOF = true; // on a atteint la fin du fichier
-
-        return true;
     }
 
     /**
      * Idem que 'nextLine' mais décrémente le pointeur
      */
-    public boolean previousLine() {
+    public void previousLine() {
         if (lineNb == 0)
-            return false;
+            return;
 
-        charOffset -= lineOffset[lineNb--]; // on soustrait l'offset de la ligne précédante
+        charOffset -= lineOffset[--lineNb]; // on soustrait l'offset de la ligne précédante
 
         if (isAtEOF)
             isAtEOF = false;
-
-        return true;
     }
 
 
@@ -356,7 +390,7 @@ public class FileLineReader {
         } else {
             // on somme les longueurs des lignes entre le dernier multiple de 500 et la ligne actuelle
 
-            charOffset = line500Offsets[line];
+            charOffset = line500Offsets[line] + lineOffset[line * 500]; // la longueur du multiple de 500 n'est pas inclu dans 'line500Offsets'
 
             for (int i = line * 500 + 1; i<lineNb;i++)
                 charOffset += lineOffset[i];
