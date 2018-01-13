@@ -13,7 +13,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.a.univ_edt_ade.Activities.ArboSelect;
-import com.a.univ_edt_ade.ArboFile.ArboExplorer;
 import com.a.univ_edt_ade.ArboFile.DataLoaderThread;
 import com.a.univ_edt_ade.R;
 
@@ -36,7 +35,12 @@ public class ArboCardAdapter extends RecyclerView.Adapter<ArboCardAdapter.ViewHo
     }
 
 
-
+    /**
+     * Le ViewHolder utilisé pour tous les objets de la liste
+     * Comme ils sont réutilisés à travers les différentes itérations, on garde en mémoire si le VH
+     * était un VH d'un dossier ou fichier, pour savoir si on a besoin de changer l'image lorsque
+     * la base de données est mise à jour
+     */
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
         public CardView cardView;
@@ -50,15 +54,22 @@ public class ArboCardAdapter extends RecyclerView.Adapter<ArboCardAdapter.ViewHo
 
     @Override
     public ArboCardAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        CardView cardView = (CardView) LayoutInflater.from(parent.getContext()).inflate(R.layout.arbo_card_item, parent, false);
+        CardView cardView = (CardView) LayoutInflater
+                .from(parent.getContext())
+                .inflate(R.layout.arbo_card_item, parent, false);
 
         return new ViewHolder(cardView);
     }
 
+    /**
+     * Initialisation d'un VH
+     * On change l'image de la cardView si le type du VH (dossier ou fichier) est différent du
+     * précédent.
+     * Si c'est un dossier on lui rajoute un OnClickListener qui va envoyer un message au
+     * DataLoaderThread pour aller dans ce dossier
+     */
     @Override
     public void onBindViewHolder(final ViewHolder holder, final int position) {
-
-        // TODO : faire en sorte que la card view ait une hauteur min de 40dp et puisse englober tout son texte
 
         if (names[position].contains("__")) {
             // c'est un fichier, on change l'image en celle du fichier et on coupe la marque

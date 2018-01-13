@@ -24,9 +24,8 @@ public class DataLoaderThread extends Thread implements Handler.Callback {
     public static Handler DataLoaderHandler;
     private Messenger toMainThread;
     public static final int CUSTOM_MESSAGE = 42,
-                            MESSAGE_UPDATE_DATA = 1,
-                            MESSAGE_CHILD_CLICKED = 2,
-                            MESSAGE_GOTO_PARENT = 3;
+                            MESSAGE_CHILD_CLICKED = 1,
+                            MESSAGE_GOTO_PARENT = 2;
 
     private boolean running = true;
     private final Object mutex = new Object();
@@ -36,7 +35,10 @@ public class DataLoaderThread extends Thread implements Handler.Callback {
         toMainThread = new Messenger(msg.getTarget());
     }
 
-
+    /**
+     * On initialise le nouveau Thread, on notifie le Thread parent de l'initialisation, puis
+     * on initialise l'Arborescence et on notifie encore le Thread parent
+     */
     @Override
     public void run() {
         HandlerThread thread = new HandlerThread("DataLoader");
@@ -72,7 +74,10 @@ public class DataLoaderThread extends Thread implements Handler.Callback {
         thread.quit();
     }
 
-
+    /**
+     * Appelée lorsque le Thread parent s'arrête
+     * On ferme alors ce Thread proprement
+     */
     public void shutdown() {
         running = false;
 
@@ -81,34 +86,39 @@ public class DataLoaderThread extends Thread implements Handler.Callback {
         }
     }
 
-
+    /**
+     * Un autre Thread nous a envoyé un mesage, si ce n'est pas un message pour s'occuper de
+     * l'arborescence (tag CUSTOM_MESSAGE), alors on l'ignore
+     *
+     * 'arg1' du message est le type d'action que l'on veut faire :
+     *
+     * 'CHILD_CLICKED' est appelé par un dossier d'un VH de 'ArboCardAdapter', on déplace le
+     * pointeur de l'arborescence dans le n-ième (msg.arg2) enfant du dossier parent
+     *
+     * 'GOTO_PARENT' est appelé par 'cardRoot' dans 'ArboSelect' lorsque l'on veut aller dans le
+     * dossier parent
+     *
+     * On retourne alors (si on a fati quelque chose) au Thread parent le nouveau path et le contenu
+     * du nouveau dossier
+     */
     @Override
     public boolean handleMessage(Message msg) {
-        switch (msg.what) {
-            case CUSTOM_MESSAGE:
-                break;
-
-            default:
-                return false;
-        }
-
+        if (!(msg.what == CUSTOM_MESSAGE))
+            return false;
 
         String[] output = null;
         String newPath = null;
 
-
         switch (msg.arg1) {
-            case MESSAGE_UPDATE_DATA:
-                ArboSelect.isLoading.set(true);
-
-                output = ArboStorage.arbo.obtainFolderContents();
-
-                break;
-
             case MESSAGE_CHILD_CLICKED:
                 ArboSelect.isLoading.set(true);
 
-                ArboStorage.arbo.goIntoChildFolder(msg.arg2);
+                if (!ArboStorage.arbo.goIntoChildFolder(msg.arg2)) {
+                    // le nouveau dossier est vide
+                    sendSimpleMsg(ArboSelect.EMPTY_FILE_ERROR, null);
+                    break; // on ne fait rien d'autre
+                }
+
                 output = ArboStorage.arbo.obtainFolderContents();
 
                 newPath = "\\" + ArboExplorer.getPath();
@@ -142,6 +152,9 @@ public class DataLoaderThread extends Thread implements Handler.Callback {
         return true;
     }
 
+    /**
+     * Envoie un message au Thread parent
+     */
     private void sendSimpleMsg(int arg, @Nullable Object obj) {
         // on envoie un message demandant de mettre à jour l'adapter de la liste
         final Message msg = Message.obtain();

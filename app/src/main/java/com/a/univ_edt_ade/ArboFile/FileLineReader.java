@@ -8,6 +8,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.LinkedHashMap;
 
 /**
  * Reader qui permet de lire un fichier ligne par ligne, et de lire le fichier à une ligne voulue
@@ -49,41 +50,13 @@ public class FileLineReader {
             e.printStackTrace();
         }
 
-        tests();
-
         setLineNumber(0);
     }
 
-
-    void tests() {
-        int index;
-        for (int i=0;i<20;i++) {
-
-            index = (int) (Math.random() * lineCount);
-
-            setLineNumber(index);
-
-            Log.d("FileLineReader", "Line n°" + index + " = '" + readLine() + "'");
-        }
-
-        for (int i=0;i<10;i++) {
-            setLineNumber(i* 500);
-            Log.d("FileLineReader", "Line n°" + i * 500 + " = '" + readLine() + "'");
-        }
-    }
-
-
-
-
-
-
-
-
-
     /**
-     * Définit 'lineLengths', 'line500indexes', 'lineCount' et 'charCount'
-     * Parcourt une fois l'entièreté du fichier pour déterminer le nombre de lignes et de caractères
-     * puis initialise les Arrays, pour ensuite les remplir en parcourant une nouvelle fois le fichier
+     * Définit 'lineOffset', 'line500Offsets' et 'lineCount'
+     * Parcourt une fois l'entièreté du fichier pour déterminer le nombre de lignes puis initialise
+     * les Arrays, pour ensuite les remplir en parcourant une nouvelle fois le fichier
      */
     private void setConstants() {
         try {
@@ -103,7 +76,10 @@ public class FileLineReader {
                 }
             }
 
+            bufferedReader.close();
+
             Log.d("FileLineReader", "Line and byte counting took " + (System.nanoTime() - start) + " ns."); // TODO: DEBUG
+
 
             lineOffset = new byte[lineCount];
 
@@ -118,48 +94,46 @@ public class FileLineReader {
 
             start = System.nanoTime(); // TODO: DEBUG
 
-            try {
-                int lineIndex = 0;
-                byte charLineCount = 0;
+            int lineIndex = 0;
+            byte charLineCount = 0;
 
-                short lineCharSum = 0;
-                int line500Index = 1;
+            short lineCharSum = 0;
+            int line500Index = 1;
 
-                bufferedReader = new BufferedReader(new FileReader(file)); // on reset le reader
+            bufferedReader = new BufferedReader(new FileReader(file)); // on reset le reader
 
-                int c;
-                readingFile:
-                for (;;) {
-                    c = bufferedReader.read();
-                    switch (c) {
-                        case 13: // carriage return, '\r' ou 13 : marque la fin d'une ligne
-                            if (lineIndex % 500 == 0 && lineIndex != 0) {
-                                line500Offsets[line500Index] = line500Offsets[line500Index++ - 1] + lineCharSum;
-                                lineCharSum = 0;
-                            }
-                            charLineCount += 2; // on rajoute la fin de ligne (\r\n), qui tiennent en 1 byte chacun
+            int c;
+            readingFile:
+            for (;;) {
+                c = bufferedReader.read();
+                switch (c) {
+                    case 13: // carriage return, '\r' ou 13 : marque la fin d'une ligne
+                        if (lineIndex % 500 == 0 && lineIndex != 0) {
+                            line500Offsets[line500Index] = line500Offsets[line500Index++ - 1] + lineCharSum;
+                            lineCharSum = 0;
+                        }
+                        charLineCount += 2; // on rajoute la fin de ligne (\r\n), qui tiennent en 1 byte chacun
 
-                            lineOffset[lineIndex++] = charLineCount;
-                            lineCharSum += charLineCount;
-                            charLineCount = 0;
-                            break;
+                        lineOffset[lineIndex++] = charLineCount;
+                        lineCharSum += charLineCount;
+                        charLineCount = 0;
+                        break;
 
-                        case 10: // new line '\n', toujours après un '\r' dans le fichier que l'on lit
-                            break;
+                    case 10: // new line '\n', toujours après un '\r' dans le fichier que l'on lit
+                        break;
 
-                        case -1:
-                            break readingFile; // EOF
+                    case -1:
+                        break readingFile; // EOF
 
-                        default:
-                            // on ajoute le nombre de bytes sur lequel le caractère est encodé, car
-                            // RandomAccessFile utilise des bytes et pas des caractères
-                            charLineCount += getNbOfBytesInChar(c);
-                            break;
-                    }
+                    default:
+                        // on ajoute le nombre de bytes sur lequel le caractère est encodé, car
+                        // RandomAccessFile utilise des bytes et pas des caractères
+                        charLineCount += getNbOfBytesInChar(c);
+                        break;
                 }
-            } catch (IOException e) {
-                Log.e("FileLineReader", "An error occured while storing chars and setting lines offsets", e);
             }
+
+            bufferedReader.close();
 
             Log.d("FileLineReader", "Arrays initialisation took " + (System.nanoTime() - start) + " ns."); // TODO: DEBUG
 
@@ -181,7 +155,75 @@ public class FileLineReader {
         return 4;
     }
 
+    /**
+     * Revoie les lignes et leur numéro qui n'ont pas d'indentation, soit donc les lignes du dossier
+     * root.
+     * Cette opération a lieu dans un BufferedReader pour que cela ne dure pas 4 secondes.
+     */
+    public LinkedHashMap<Integer, String> getRootLines() {
+        final LinkedHashMap<Integer, String> output = new LinkedHashMap<>();
 
+        try {
+            BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
+
+            boolean newLine = false;
+            int lineNb = 0;
+            int spaceCount = 0;
+
+            final StringBuilder lineBuilder = new StringBuilder();
+
+            int c;
+
+            readingFile:
+            for (;;) {
+                c = bufferedReader.read();
+                switch (c) {
+                    case 32: // ' '
+                        if (newLine)
+                            spaceCount++;
+                        break;
+
+                    case 10: // '\n'
+                        newLine = true;
+                        lineNb++;
+                        break;
+
+                    case -1: // EOF
+                        break readingFile;
+
+                    default: // n'importe quel autre caractère
+                        if (newLine) {
+                            newLine = false;
+
+                            if (spaceCount < 4) {
+                                // la ligne n'a pas d'indent, c'est une ligne du dossier root
+
+                                for (int i=0;i<spaceCount;i++)
+                                    lineBuilder.append(' ');
+                                lineBuilder.append((char) c);
+                                lineBuilder.append(bufferedReader.readLine());
+
+                                output.put(lineNb, lineBuilder.toString());
+                                lineNb++;
+
+                                lineBuilder.setLength(0);
+                            }
+
+                            spaceCount = 0;
+                        }
+                }
+            }
+
+            bufferedReader.close();
+
+        } catch (FileNotFoundException e) {
+            Log.e("FileLineReader", "File not found.", e);
+        } catch (IOException e) {
+            Log.e("FileLineReader", "Error", e);
+        }
+
+        return output;
+    }
 
 
     /**
@@ -311,6 +353,8 @@ public class FileLineReader {
 
         Log.d("FileLineReader", "Setting line to " + newNb);
 
+        debug();
+
         if (newNb >= lineCount - 1 || newNb < 0)
             return;
 
@@ -328,6 +372,15 @@ public class FileLineReader {
 
         if (lineNb < lineCount - 1 && isAtEOF)
             isAtEOF = false; // nous ne sommes plus à la fin du fichier
+    }
+
+    // TODO : DEBUG
+    public void debug() {
+        Log.d("FileLineReader", "Debug : line at " + lineNb + " : '" + readLine() + "'" +
+                "\r\n - next line : '" + readLine() + "'");
+
+        previousLine();
+        previousLine();
     }
 
     public int getLineNumber() {return lineNb;}
@@ -363,7 +416,7 @@ public class FileLineReader {
 
     /**
      * Calcule le nombre de caractères situés avant la ligne actuelle (lineNb) à partir de la valeur
-     * dans 'line500indexes' du multiple de 500 le plus proche
+     * dans 'line500Offsets' du multiple de 500 le plus proche
      * Ne calcule l'offset que si il y a besoin
      */
     private void computeCharOffset() {

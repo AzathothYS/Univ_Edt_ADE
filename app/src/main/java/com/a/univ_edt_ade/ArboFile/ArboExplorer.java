@@ -4,6 +4,7 @@ import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,10 +29,6 @@ import java.util.regex.Pattern;
  *
  */
 
-// TODO : penser à tester les AsyncTask pour faire tout ça...
-
-// TODO : voir si on peut optimiser le code avec les nouvelles méthodes de 'FileLineReader'
-
 public class ArboExplorer {
 
     private static final Matcher indent;
@@ -41,16 +38,6 @@ public class ArboExplorer {
     }
 
     public String fileInfo = "";
-
-    /**
-     * retient les numéros des lignes où les éléments du dossier où l'on se trouve commencent
-     */
-    //private LinkedList<Integer> folderItemList = new LinkedList<>();
-
-    /**
-     * retient les numéros des lignes des dossiers parents au dossier actif
-     */
-    //private LinkedList<Integer> arboList = new LinkedList<>();
 
     /**
      * Contient la liste de tous les noms des fichiers et dossiers contenus dans les dossiers
@@ -76,6 +63,7 @@ public class ArboExplorer {
 
     private FileLineReader lineReader; // TODO : voir si il y a besoin de rajouter un 'reader.close' à la fin
 
+
     public ArboExplorer(File file) {
 
         Log.d("ArboExplorer", "Opening Arborescence file...");
@@ -94,42 +82,13 @@ public class ArboExplorer {
     }
 
 
-
     private void setRootLines() {
 
-        // TODO : voir pour le faire dans un buffered reader pour gagner en efficacité
+        final LinkedHashMap<Integer, String> rootLines = lineReader.getRootLines();
 
-        LinkedList<Integer> rootLineList = new LinkedList<>();
-        LinkedList<String> rootNamesList = new LinkedList<>();
-
-        rootLineList.add(1); // la 1ere ligne est celle juste après le descripteur du fichier
-        rootNamesList.add(lineReader.readLine()); // le descripteur du fichier à déjà été lu
-
-        // on parcourt tout le fichier à la recherche de lignes qui n'ont pas d'indentation
-        // ça prend pas mal de ressources d'où le fait qu'on le fait qu'une seule fois
-        String line;
-        readerLoop:
-        for (;;) {
-            line = lineReader.readLine();
-            switch (getIndent(line)) {
-                case 0:
-                    rootLineList.add(lineReader.getLineNumber() - 1); // -1 car le pointeur c'est déplacé pour la ligne suivante
-                    rootNamesList.add(line);
-
-                    Log.d("ArboExplorer", "Added '" + line + "' of line " + lineReader.getLineNumber() + " in root index.");
-
-                    break;
-
-                case 420:
-                    Log.d("ArboExplorer", "Reached file end at line " + lineReader.getLineNumber());
-                    break readerLoop; // on a atteint la fin du fichier
-            }
-        }
-
-        Arborescence_Indexes.add(rootLineList.toArray(new Integer[rootLineList.size()]));
-        Arborescence_Names.add(rootNamesList.toArray(new String[rootNamesList.size()]));
+        Arborescence_Indexes.add(rootLines.keySet().toArray(new Integer[rootLines.size()]));
+        Arborescence_Names.add(rootLines.values().toArray(new String[rootLines.size()]));
     }
-
 
     private boolean isThereAProblem = false;
 
@@ -249,15 +208,26 @@ public class ArboExplorer {
      * Déplace le curseur à index de l'enfant voulu
      * Assume que l'enfant est bien un dossier
      */
-    public void goIntoChildFolder(int indexOfChild) {
+    public boolean goIntoChildFolder(int indexOfChild) {
 
         int targetLine = Arborescence_Indexes.getLast()[indexOfChild];
 
         lineReader.setLineNumber(targetLine);
+        String line = lineReader.readLine();
+
+        // on regarde si le dossier est vide
+        if (getIndent(line) >= getIndent(lineReader.readLine())) {
+            // la ligne suivante est un nouveau dossier qui n'est pas dans le dossier
+            lineReader.setLineNumber(Arborescence_Path.getLast());
+            return false;
+        }
+
         Arborescence_Path.add(targetLine);
 
-        Path_Names.add(lineReader.readLine());
+        Path_Names.add(line);
         lineReader.previousLine();
+
+        return true;
     }
 
     /**

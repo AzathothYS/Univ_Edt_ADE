@@ -27,7 +27,7 @@
         <item>#d384e7</item>
     </string-array>
 
-    <!-- TODO : à tester -->
+    <!-- TODO : à tester (à implémenter plutôt)-->
     <string-array name="eventColorSet2">
         <item>#e4de8e</item>
         <item>#6475ca</item>
