@@ -29,9 +29,11 @@ import com.a.univ_edt_ade.TestGridView;
 public class BaseActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    private MenuDrawer menuDrawer;
+    // TODO : ranger toutes les activités et leurs Assests en dossiers séparés
+
+    public MenuDrawer menuDrawer;
     private NavigationView navView;
-    private ActionBarDrawerToggle drawerToggle;
+    public ActionBarDrawerToggle drawerToggle;
     private CustomToolbar toolbar;
     private AppBarLayout appBarLayout;
     public CustomCoordinatorLayout mainLayout;
@@ -139,7 +141,7 @@ public class BaseActivity extends AppCompatActivity
                     break;
 
                 case R.id.Menu_arboSelect:
-                    activityStarterPack = new Intent(this, ArboSelect.class);
+                    activityStarterPack = new Intent(this, EdTList.class);
                     break;
 
                 case R.id.Menu_options:
@@ -152,8 +154,13 @@ public class BaseActivity extends AppCompatActivity
             }
         }
 
-        if (activityStarterPack != null)
+        if (activityStarterPack != null) {
             startActivity(activityStarterPack);
+
+            // on ferme l'activité actuelle après avoir lancé la suivante, pour ne pas
+            // avoir un effet de transition trop marqué
+            finish();
+        }
 
         menuDrawer.closeDrawer(GravityCompat.START);
         return true;

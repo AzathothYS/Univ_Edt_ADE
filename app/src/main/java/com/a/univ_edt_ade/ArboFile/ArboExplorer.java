@@ -4,7 +4,11 @@ import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
+import java.lang.reflect.ParameterizedType;
+import java.text.ParseException;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -59,6 +63,11 @@ public class ArboExplorer {
      * Contient les noms des dossiers que l'on a parcouru
      */
     private static final LinkedList<String> Path_Names = new LinkedList<>();
+
+    /**
+     * Contient les index des dossiers du path dans leur dossier parent
+     */
+    private static final LinkedList<Integer> Path_Children_Indexes = new LinkedList<>();
 
 
     private FileLineReader lineReader; // TODO : voir si il y a besoin de rajouter un 'reader.close' à la fin
@@ -225,6 +234,7 @@ public class ArboExplorer {
         Arborescence_Path.add(targetLine);
 
         Path_Names.add(line);
+        Path_Children_Indexes.add(indexOfChild);
         lineReader.previousLine();
 
         return true;
@@ -246,6 +256,7 @@ public class ArboExplorer {
         Arborescence_Indexes.removeLast();
         Arborescence_Names.removeLast();
         Path_Names.removeLast();
+        Path_Children_Indexes.removeLast();
 
         if (Arborescence_Path.size() == 0)
             lineReader.setLineNumber(1); // on se retrouve dans le dossier parent
@@ -254,6 +265,17 @@ public class ArboExplorer {
 
         return true;
     }
+
+
+
+    public int getPathLength() {
+        return Arborescence_Path.size();
+    }
+
+    public int getLineNb() {
+        return lineReader.getLineNumber();
+    }
+
 
     /**
      * Retourne le nombre de quadruples espaces présents au début de 'str'
@@ -311,5 +333,72 @@ public class ArboExplorer {
 
         } else
             return "";
+    }
+
+
+    /**
+     * Un fichier a été sélectionné, on veut donc obtenir le chemin dans l'arborescence pour aller
+     * jusqu'à lui
+     */
+    public LinkedList<PathEntry> selectChildFile(int indexOfChild) {
+
+        if (!Arborescence_Names.getLast()[indexOfChild].contains("__")) {
+            Log.d("ArboExplorer", "L'élément sélectionné n'est pas un fichier!");
+            return null;
+        }
+
+        LinkedList<PathEntry> output = new LinkedList<>();
+
+        // TODO : vérifier si il ne faudrait pas ajouter 1 aux index, pour le parser AHK
+
+        output.add(new PathEntry(
+                indexOfChild,
+                Arborescence_Indexes.getLast()[indexOfChild],
+                Arborescence_Names.getLast()[indexOfChild]));
+
+        // on enregistre le path à l'envers, c'est plus pratique lors de la lecture
+        for (int i=Path_Names.size()-1;i>=0;i--) {
+            output.add(new PathEntry(
+                    Path_Children_Indexes.get(i),
+                    Arborescence_Path.get(i),
+                    Path_Names.get(i)));
+        }
+
+        return output;
+    }
+
+    public void followPath(LinkedList<PathEntry> path) {
+
+        lineReader.setLineNumber(1);
+
+        PathEntry pathEntry;
+        // on parcourt le path à l'envers, c'est comme cela qu'il est stocké. On ignore le premier
+        // élément du path, car c'est un fichier (la cible du path)
+        for(int i=path.size() - 1;i>0;i--) {
+            pathEntry = path.get(i);
+
+            goIntoChildFolder(pathEntry.INDEX);
+
+            if (lineReader.getLineNumber() != pathEntry.LIGNE) {
+                Log.e("ArboExplorer", "ERROR : the path to follow doesn't end up at the right line ! Expected : " + pathEntry.LIGNE + " - Got : " + lineReader.getLineNumber(),
+                        new Exception("Incorrect path"));
+            }
+
+            obtainFolderContents();
+        }
+    }
+
+
+
+    public static class PathEntry implements Serializable {
+        public final int INDEX;
+        public final int LIGNE;
+        public final String NOM;
+
+        public PathEntry(int index, int ligne, String nom) {
+            INDEX = index;
+            LIGNE = ligne;
+            NOM = nom;
+        }
     }
 }

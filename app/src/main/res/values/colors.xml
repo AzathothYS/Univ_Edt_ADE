@@ -4,6 +4,8 @@
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
 
+    <color name="blank">#00ffffff</color>
+
     <color name="toolbarColor">#00be00</color>
     <color name="menuGradCenter">#009900</color>
     <color name="menuGradEnd">#006600</color>
@@ -45,5 +47,10 @@
     </string-array>
 
     <color name="textRListLineColor">#6e6e6e</color>
+
+    <color name="itemHighlighted">#6800badf</color>
+
+    <color name="file_dialog_title">#1e1e1e</color>
+    <color name="file_dialog_file">#4e4e4e</color>
 
 </resources>

@@ -1,7 +1,6 @@
 package com.a.univ_edt_ade.EdTFile;
 
 import android.content.Context;
-import android.support.annotation.Nullable;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -11,7 +10,6 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Map;
 
 
 /**
@@ -63,7 +61,7 @@ public class JsonEdt {
         try{
             FileInputStream edtFile = new FileInputStream(file);
 
-            byte[] buffer = new byte[edtFile.available()];
+            byte[] buffer = new byte[edtFile.available()]; // TODO : avoir une taille fixe et rafraichir le buffer si il est trop grand ???
 
             while (edtFile.read(buffer) != -1);
 

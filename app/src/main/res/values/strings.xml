@@ -22,14 +22,16 @@
 
     <string name="action_settings">Settings</string>
 
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
-
-
     <!-- Utilisés pour des tests dans TestGlobalDrawer-->
     <string name="open_drawer">open</string>
     <string name="close_drawer">close</string>
     <string name="menu">menu</string>
+
+
+    <string name="edt_list_title">Liste des Emplois du Temps</string>
+    <string name="edt_file_list_title">Liste des fichiers de l\'Emploi du Temps</string>
+
+    <string name="file_select_dialog_text">Voulez-vous ajouter ce fichier à cet emploi du temps ?</string>
 
 
 </resources>

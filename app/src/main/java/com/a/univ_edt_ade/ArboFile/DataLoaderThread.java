@@ -10,6 +10,9 @@ import android.util.Log;
 
 import com.a.univ_edt_ade.Activities.ArboSelect;
 
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+
 /**
  * Thread dont la tâche consiste à assurer le lien entre le fichier de l'arborescence d'ADE et
  * 'ArboSelect" qui affiche le contenu du fichier dans une recycler list.
@@ -25,7 +28,9 @@ public class DataLoaderThread extends Thread implements Handler.Callback {
     private Messenger toMainThread;
     public static final int CUSTOM_MESSAGE = 42,
                             MESSAGE_CHILD_CLICKED = 1,
-                            MESSAGE_GOTO_PARENT = 2;
+                            MESSAGE_INIT_PATH = 2,
+                            MESSAGE_GOTO_PARENT = 3,
+                            MESSAGE_FILE_CLICKED = 4;
 
     private boolean running = true;
     private final Object mutex = new Object();
@@ -95,6 +100,9 @@ public class DataLoaderThread extends Thread implements Handler.Callback {
      * 'CHILD_CLICKED' est appelé par un dossier d'un VH de 'ArboCardAdapter', on déplace le
      * pointeur de l'arborescence dans le n-ième (msg.arg2) enfant du dossier parent
      *
+     * 'INIT_PATh' est appelé lorsque le ArboSelect et le DataLoader sont initialisés, on suit alors
+     * ce chemin initial pour que ce dossier soit
+     *
      * 'GOTO_PARENT' est appelé par 'cardRoot' dans 'ArboSelect' lorsque l'on veut aller dans le
      * dossier parent
      *
@@ -125,6 +133,19 @@ public class DataLoaderThread extends Thread implements Handler.Callback {
 
                 break;
 
+            case MESSAGE_INIT_PATH:
+                ArboSelect.isLoading.set(true);
+
+                Log.d("DataLoader", "Following initial path...");
+
+                ArboStorage.arbo.followPath((LinkedList<ArboExplorer.PathEntry>) msg.obj);
+
+                output = ArboStorage.arbo.obtainFolderContents();
+
+                newPath = "\\" + ArboExplorer.getPath();
+
+                break;
+
             case MESSAGE_GOTO_PARENT:
 
                 if (ArboStorage.arbo.goToParentFolder()) {
@@ -139,6 +160,16 @@ public class DataLoaderThread extends Thread implements Handler.Callback {
                 } else {
                     Log.d("DataLoader", "Nous sommes déjà dans le dossier root.");
                 }
+
+                break;
+
+            case MESSAGE_FILE_CLICKED:
+
+                Log.d("DataLoader", "Fichier n°" + msg.arg2 + " sélectionné");
+
+                LinkedList<ArboExplorer.PathEntry> pathOutput = ArboStorage.arbo.selectChildFile(msg.arg2);
+
+                sendSimpleMsg(ArboSelect.FILE_CLICKED_OUTPUT, pathOutput);
 
                 break;
         }

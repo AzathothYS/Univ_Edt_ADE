@@ -10,6 +10,8 @@ import java.io.IOException;
  * Created by 7 on 16/09/2017.
  */
 
+// TODO : à supprimer ??
+
 public class JsonParser {
 
     private File src;

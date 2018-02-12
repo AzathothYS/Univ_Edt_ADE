@@ -1,8 +1,10 @@
 package com.a.univ_edt_ade.CustomsAssets;
 
+import android.os.Handler;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.support.annotation.Nullable;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -24,16 +26,28 @@ import com.a.univ_edt_ade.R;
 public class ArboCardAdapter extends RecyclerView.Adapter<ArboCardAdapter.ViewHolder> {
 
     private String[] names;
-    private Messenger toDataHolder;
+    public Messenger toDataHolder;
+    public Messenger toMainThread;
+
+    private int selectedIndex;
+    public int selectedFolderLine;
+    public boolean areWeInTheSelectedItemsFolder = false;
 
     public ArboCardAdapter(String[] names) {
         this.names = names;
     }
 
-    public void setMessenger() {
+    public void setMessenger(Handler ArboSelectHandler) {
         this.toDataHolder = new Messenger(DataLoaderThread.DataLoaderHandler);
+
+        this.toMainThread = new Messenger(ArboSelectHandler);
     }
 
+    public void setSelectedItem(int index, int line) {
+        selectedIndex = index;
+        selectedFolderLine = line;
+        areWeInTheSelectedItemsFolder = true;
+    }
 
     /**
      * Le ViewHolder utilisé pour tous les objets de la liste
@@ -72,48 +86,38 @@ public class ArboCardAdapter extends RecyclerView.Adapter<ArboCardAdapter.ViewHo
     public void onBindViewHolder(final ViewHolder holder, final int position) {
 
         if (names[position].contains("__")) {
-            // c'est un fichier, on change l'image en celle du fichier et on coupe la marque
-            ((ImageView) holder.cardView.getChildAt(0)).setImageResource(R.drawable.ic_description_black_24dp);
-
             // le nom du fichier est stocké avec un '__' au début, on l'enlève avant de l'afficher
             ((TextView) holder.cardView.getChildAt(1)).setText(names[position].substring(3));
 
             if (holder.isFolder) {
-                // comme les ViewHolders sont réutilisés, il faut s'assurer qu'il n'y ait pas de
-                // Listener attaché à cette View.
-                holder.cardView.setOnClickListener(null);
+                // c'était un dossier, on change l'image en celle du fichier
+                ((ImageView) holder.cardView.getChildAt(0)).setImageResource(R.drawable.ic_description_black_24dp);
+
                 holder.isFolder = false;
             }
 
         } else {
             // c'est un dossier
+            ((TextView) holder.cardView.getChildAt(1)).setText(names[position]);
 
             if (!holder.isFolder) {
-                // ce holder était un fichier précédament
+                // ce holder était un fichier précédament, on change l'image en celle du dossier
                 ((ImageView) holder.cardView.getChildAt(0)).setImageResource(R.drawable.ic_folder_black_24dp);
+
                 holder.isFolder = true;
             }
+        }
 
-            // pour détecter le fait que l'on veut ouvrir le dossier
-            holder.cardView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Log.d("recylCardView", "Touched cardView at " + holder.getAdapterPosition());
+        // on reset le listener à chaque fois
+        holder.cardView.setOnClickListener(
+                new ItemOnClickListener(
+                        holder.getAdapterPosition(),
+                        holder.isFolder,
+                        holder.isFolder ? null : names[position]));
 
-                    final Message msg = Message.obtain();
-                    msg.what = DataLoaderThread.CUSTOM_MESSAGE;
-                    msg.arg1 = DataLoaderThread.MESSAGE_CHILD_CLICKED;
-                    msg.arg2 = holder.getAdapterPosition();
-
-                    try {
-                        toDataHolder.send(msg);
-                    } catch (RemoteException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
-
-            ((TextView) holder.cardView.getChildAt(1)).setText(names[position]);
+        if (areWeInTheSelectedItemsFolder && position == selectedIndex) {
+            holder.cardView.setBackgroundColor(0x6800badf);
+            holder.setIsRecyclable(false);
         }
     }
 
@@ -125,8 +129,50 @@ public class ArboCardAdapter extends RecyclerView.Adapter<ArboCardAdapter.ViewHo
     public void setNewData() {
         names = ArboSelect.arboItemList;
 
+        if (areWeInTheSelectedItemsFolder)
+            areWeInTheSelectedItemsFolder = false;
+
         Log.d("ArboAdapter", "New data set : " + names.length);
 
         notifyDataSetChanged();
+    }
+
+
+    private class ItemOnClickListener implements View.OnClickListener {
+
+        private final int adapterPosition;
+        private boolean isFolder = true;
+
+        public String name = ""; // utilisé uniquement pour les fichiers
+
+        public ItemOnClickListener(int adapterPosition, boolean isFolder, @Nullable String name) {
+            this.adapterPosition = adapterPosition;
+            this.isFolder = isFolder;
+            this.name = name;
+        }
+
+        @Override
+        public void onClick(View v) {
+
+            Log.d("recylCardView", "Touched cardView " + (isFolder ? "(folder)" : "(file)" ) + " at " + adapterPosition);
+
+            final Message msg = Message.obtain();
+            msg.what = isFolder ? DataLoaderThread.CUSTOM_MESSAGE : ArboSelect.CUSTOM_MESSAGE;
+            msg.arg1 = isFolder ? DataLoaderThread.MESSAGE_CHILD_CLICKED : ArboSelect.FILE_CLICKED;
+            msg.arg2 = adapterPosition;
+
+            if (!isFolder)
+                msg.obj = name;
+
+            try {
+                if (isFolder)
+                    toDataHolder.send(msg);
+                else
+                    toMainThread.send(msg);
+
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
