@@ -30,8 +30,10 @@
 
     <string name="edt_list_title">Liste des Emplois du Temps</string>
     <string name="edt_file_list_title">Liste des fichiers de l\'Emploi du Temps</string>
+    <string name="edt_dialog_ok_button">OK</string>
 
     <string name="file_select_dialog_text">Voulez-vous ajouter ce fichier à cet emploi du temps ?</string>
+
 
 
 </resources>

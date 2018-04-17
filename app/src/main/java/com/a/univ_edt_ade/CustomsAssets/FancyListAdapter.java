@@ -5,6 +5,7 @@ import android.support.annotation.DrawableRes;
 import android.support.annotation.LayoutRes;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -66,15 +67,15 @@ public abstract class FancyListAdapter extends RecyclerView.Adapter<FancyListAda
         holder.cardView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                itemOnClick(holder.getAdapterPosition());
+                itemOnClick(v, holder.getAdapterPosition());
             }
         });
     }
 
 
-    public abstract void itemOnClick(int adapterPostion);
+    public abstract void itemOnClick(View v, int adapterPostion);
 
-    public abstract void trashViewOnClick(int adapterPosition);
+    public abstract void trashViewOnClick(View v, int adapterPosition);
 
 
     private class CardViewLongClickListener implements View.OnLongClickListener {
@@ -93,9 +94,7 @@ public abstract class FancyListAdapter extends RecyclerView.Adapter<FancyListAda
                 @Override
                 public void onClick(View v) {
                     if (trashView.getVisibility() == View.VISIBLE) {
-                        trashViewOnClick(holder.getAdapterPosition());
-
-                        trashView.setVisibility(View.GONE);
+                        trashViewOnClick(v, holder.getAdapterPosition());
                     }
                 }
             });

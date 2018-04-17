@@ -28,6 +28,7 @@ import org.json.JSONException;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 
 import static com.a.univ_edt_ade.PathFile.PathFileExplorer.PATH_FILE_NAME;
@@ -45,8 +46,7 @@ public class EdTList extends BaseActivity implements EdTCardAdapter.edtAdapterCa
                                RESULT_FILE_INDEX = "pathfileindex";
 
     public static final int RESULT_PATH_EDITED = 1,
-                            RESULT_PATH_ADDED = 2,
-                            RESULT_PATH_REMOVED = 3;
+                            RESULT_PATH_ADDED = 2;
 
     public static final String FRAG_TAG = "info_frag";
 
@@ -133,6 +133,34 @@ public class EdTList extends BaseActivity implements EdTCardAdapter.edtAdapterCa
         builder.create().show();
     }
 
+    @Override
+    public void deletePathAt(final int EdTpos, final int position, String name) {
+        Log.d("EdTList", "Deleting path at " + position + " of EdT at " + EdTpos);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(name);
+        builder.setMessage("Voulez-vous supprimmer ce fichier ?");
+
+        builder.setNegativeButton("Non", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+
+        builder.setPositiveButton("Oui", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                pathFile.removePathOfEdTAt(EdTpos, position);
+
+                isPathFileModified = true;
+                ((EdTInfoFragment) getSupportFragmentManager().findFragmentByTag(FRAG_TAG))
+                        .updateData(pathFile.getPathFilesNames(EdTpos));
+            }
+        });
+
+        builder.create().show();
+    }
 
     @Override
     public void onFinishEditDialog(int pos, String inputText) {
@@ -182,8 +210,6 @@ public class EdTList extends BaseActivity implements EdTCardAdapter.edtAdapterCa
 
         startActivityForResult(toArboSelect, 42);
     }
-
-
 
 
     @Override
@@ -237,11 +263,6 @@ public class EdTList extends BaseActivity implements EdTCardAdapter.edtAdapterCa
                         Log.d("EdTList", "Added path at edt " + index);
                     }
                     break;
-
-                case RESULT_PATH_REMOVED:
-                    pathFile.removePathOfEdTAt(index, data.getIntExtra(RESULT_FILE_INDEX, -1));
-                    Log.d("EdTList", "Removed path " + data.getIntExtra(RESULT_FILE_INDEX, -1) + " of edt at " + index);
-                    break;
             }
 
             isPathFileModified = true;
@@ -265,6 +286,13 @@ public class EdTList extends BaseActivity implements EdTCardAdapter.edtAdapterCa
         }
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        updateEdTList();
+        listAdapter.updateData();
+    }
 
     private void saveEdTList() {
 
@@ -311,10 +339,24 @@ public class EdTList extends BaseActivity implements EdTCardAdapter.edtAdapterCa
         }
     }
 
+    private void updateEdTList() {
+        Log.d("EdTList", "Updating the EdTList...   (Previous list:" + EdTList.size() + ")");
+
+        String[] newEdTList = pathFile.getEdTList();
+
+        EdTList.clear();
+        EdTList.addAll(Arrays.asList(newEdTList));
+
+        Log.d("EdTList", "New Size : " + EdTList.size());
+    }
+
 
     public static String[] getEdTNames() {
         return EdTList.toArray(new String[EdTList.size()]);
     }
+
+
+
 
 
 

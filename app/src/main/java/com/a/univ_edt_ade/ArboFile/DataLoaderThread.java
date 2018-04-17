@@ -22,6 +22,8 @@ import java.util.LinkedList;
  * Basé sur : http://stephendnicholas.com/posts/android-handlerthread
  */
 
+// TODO : BUG - si on lance un follow_path au lancement de l'app, sans avoir ouvert un autre fichier, ça crash et fait plein de merdouille
+
 public class DataLoaderThread extends Thread implements Handler.Callback {
 
     public static Handler DataLoaderHandler;

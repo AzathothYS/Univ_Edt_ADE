@@ -56,6 +56,11 @@ public class TestLauncherActivityWithMenu extends BaseActivity implements EdTInf
         getSupportFragmentManager().beginTransaction().remove(getSupportFragmentManager().findFragmentById(R.id.act_frame)).commit();
     }
 
+    @Override
+    public void deletePathAt(int EdTpos, int position, String name) {
+
+    }
+
     public void onFinishEditDialog(int pos, String inputText) {
         Toast.makeText(this, inputText, Toast.LENGTH_SHORT).show();
     }

@@ -205,6 +205,21 @@ public class PathFileExplorer {
     }
 
 
+    public String[] getEdTList() {
+        String[] EdTNames = new String[pathArrayJson.length()];
+
+        for (int i=0;i<EdTNames.length;i++) {
+            try {
+                EdTNames[i] = pathArrayJson.getJSONObject(i).getString(EdT_NAME);
+            } catch (JSONException e) {
+                Log.e("PathFileExplorer", "An error occured while getting the name of the EdT at " + i, e);
+            }
+        }
+
+        return EdTNames;
+    }
+
+
     public String getEdTAt(int index, LinkedList<LinkedList<ArboExplorer.PathEntry>> output) {
 
         JSONObject outputPath = pathArrayJson.optJSONObject(index);
@@ -303,18 +318,20 @@ public class PathFileExplorer {
             }
 
             JSONObject edt;
-            JSONArray pathArray;
+            JSONArray edtPathArray;
+            JSONArray edtPathNames;
             int pathIndex;
             if (edtIndex != -1) {
                 if (pathArrayJson.getJSONObject(edtIndex).optLong(HASH) == hash) {
-                    Log.d("PathFileExplorer", "path '" + EdTName + "' is already present in the file, with the same hash");
+                    Log.d("PathFileExplorer", "path '" + pathName+ "' is already present in the EdT '" + EdTName + "', with the same hash");
                     return;
                 }
 
-                Log.d("PathFileExplorer", "path '" + EdTName + "' is already present in the file, but with a different hash");
+                Log.d("PathFileExplorer", "path '" + pathName + "' is already present in the EdT '" + EdTName + "', but with a different hash");
 
                 edt = pathArrayJson.getJSONObject(edtIndex);
-                pathArray = edt.getJSONArray(PATH_ARRAY);
+                edtPathArray = edt.getJSONArray(PATH_ARRAY);
+                edtPathNames = edt.getJSONArray(PATH_FILES);
                 // TODO : mettre à jour le hash??????
 
                 pathIndex = isPathAlreadyPresent(edtIndex, pathName);
@@ -329,7 +346,8 @@ public class PathFileExplorer {
                 edt.put(EdT_NAME, EdTName);
                 edt.put(HASH, hash);
 
-                pathArray = new JSONArray();
+                edtPathArray = new JSONArray();
+                edtPathNames = new JSONArray();
 
                 pathIndex = -1;
             }
@@ -344,29 +362,32 @@ public class PathFileExplorer {
 
             // on rajoute le path à la liste si il n'y était pas déjà, sinon on le remplace
             if (pathIndex < 0) {
-                pathArray.put(pathInJson);
+                Log.d("PathFileExplorer", "Adding the new path to the EdT...");
 
-                JSONArray pathFiles = new JSONArray();
-                pathFiles.put(pathName);
-                edt.put(PATH_FILES, pathFiles);
+                edtPathArray.put(pathInJson);
+
+                edtPathNames.put(pathName);
+                edt.put(PATH_FILES, edtPathNames);
 
             } else {
+                Log.d("PathFileExplorer", "Replacing the path at " + pathIndex + " to the EdT...");
+
                 // on supprime le path dèjà présent, avant de la rajouter
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                    pathArray.remove(edtIndex);
+                    edtPathArray.remove(edtIndex);
 
                 } else {
                     // alternative forcée à cause du manque de la fonction 'remove', laborieux mais fonctionnel
                     JSONArray temp = new JSONArray();
-                    for (int i=0;i<pathArray.length();i++) {
+                    for (int i=0;i<edtPathArray.length();i++) {
                         if (i != edtIndex) {  // on ignore l'index que l'on veut supprimmer
-                            temp.put(pathArray.get(i));
+                            temp.put(edtPathArray.get(i));
                         }
                     }
-                    pathArray = temp;
+                    edtPathArray = temp;
                 }
 
-                pathArray.put(pathIndex, pathInJson);
+                edtPathArray.put(pathIndex, pathInJson);
 
 
                 // on modifie la liste des path si elle a changée
@@ -376,9 +397,9 @@ public class PathFileExplorer {
                         pathNamesList.remove(pathIndex);
                     } else {
                         JSONArray temp = new JSONArray();
-                        for (int i=0;i<pathArray.length();i++) {
+                        for (int i=0;i<edtPathArray.length();i++) {
                             if (i != edtIndex) {  // on ignore l'index que l'on veut supprimmer
-                                temp.put(pathArray.get(i));
+                                temp.put(edtPathArray.get(i));
                             } else {
                                 temp.put(pathName);
                             }
@@ -390,7 +411,7 @@ public class PathFileExplorer {
                 }
             }
 
-            edt.put(PATH_ARRAY, pathArray); // on remplace l'array par la nouvelle
+            edt.put(PATH_ARRAY, edtPathArray); // on remplace l'array par la nouvelle
 
 
             saveModificationsOfEdTAt(edtIndex, edt);
@@ -483,22 +504,34 @@ public class PathFileExplorer {
         try {
             JSONObject edt = pathArrayJson.getJSONObject(EdTIndex);
             JSONArray pathArray = edt.getJSONArray(PATH_ARRAY);
+            JSONArray pathNames = edt.getJSONArray(PATH_FILES);
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                 pathArray.remove(pathIndex);
+                pathNames.remove(pathIndex);
 
             } else {
                 JSONArray temp = new JSONArray();
+                JSONArray temp2 = new JSONArray();
                 for (int i=0;i<pathArray.length();i++)
-                    if (i != pathIndex)
+                    if (i != pathIndex) {
                         temp.put(pathArray.get(i));
+                        temp2.put(pathNames.get(i));
+                    }
 
                 pathArray = temp;
+                pathNames = temp2;
             }
 
             edt.put(PATH_ARRAY, pathArray);
+            edt.put(PATH_FILES, pathNames);
 
             saveModificationsOfEdTAt(EdTIndex, edt);
+
+            // DEBUG
+            Log.d("PathFileExplorer", "Result of delet operation : ");
+            Log.d("PathFileExplorer", "     path array length:" + pathArrayJson.getJSONObject(EdTIndex).getJSONArray(PATH_ARRAY).length());
+            Log.d("PathFileExplorer", "     path names length:" + pathArrayJson.getJSONObject(EdTIndex).getJSONArray(PATH_FILES).length());
 
         } catch (JSONException e) {
             e.printStackTrace();
